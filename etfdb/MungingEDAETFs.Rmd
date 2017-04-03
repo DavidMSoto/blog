@@ -1,0 +1,73 @@
+---
+title: "ETFproject"
+output: html_document
+---
+# Load the required libraries
+
+library(data.table) 
+library(bit64)
+
+rm(list = ls()) getwd()
+
+library(dplyr) options(digits=2)
+
+train <- readRDS("D:/repos/Scraping/df.rds") %>% as.data.frame() # SILENCE
+str(train)
+
+
+
+#data cleaning
+
+
+names(train) <- gsub("[\n]| ",'',names(train))   ## nicer names 
+
+heatmap <- train %>%    select(1,2,9,10,11,12,13,14) summary(heatmap)
+
+names(heatmap)
+
+heatmap[, c(1,2,8)] <- sapply(heatmap[, c(1,2,8)], as.character)
+
+heatmap[, c(3)]<- as.numeric(sub("%", "", heatmap[, c(3)])) heatmap[, c(4)]<-
+as.numeric(sub("%", "", heatmap[, c(4)])) heatmap[, c(5)]<- as.numeric(sub("%",
+"", heatmap[, c(5)])) heatmap[, c(6)]<- as.numeric(sub("%", "",
+heatmap[, c(6)])) heatmap[, c(7)]<- as.numeric(sub("%", "", heatmap[, c(7)]))
+
+#train[, c(3)] <- sapply(gsub("[$]", "", train[,3]), as.numeric)
+
+summary(heatmap) #- 106 NAs ..
+
+require(Amelia)
+
+completeHeat <-heatmap[complete.cases(heatmap),]  #**removing NAs
+
+unique(completeHeat$ETFdb.comCategory)
+
+
+#ExploratoryAnalysis heat map by category
+#http://flowingdata.com/2010/01/21/how-to-make-a-heatmap-a-quick-and-easy-solution/
+#https://learnr.wordpress.com/2010/01/26/ggplot2-quick-heatmap-plotting/
+
+
+
+xxx <- aggregate( cbind(completeHeat$`5year` ,  completeHeat$`3year` ,
+completeHeat$`1year` , completeHeat$`4Week` )            ~  ETFdb.comCategory,
+completeHeat, mean )
+
+data <- xxx[order(xxx$V1),] str(data)
+
+colnames(data) <- c("Category", "5 Years", "3 Years", "1 Year", "4 weeks") 
+
+rnames <- data[,1] mat_data <- data.matrix(data[,2:ncol(data)])
+rownames(mat_data) <- rnames nba_heatmap <- heatmap(mat_data, Rowv=NA, Colv=NA,
+col = cm.colors(256), scale="column", margins=c(5,10))
+
+data <- xxx[cbind(order(xxx$V1),order(xxx$V2)),] data <- xxx[order(xxx$V1),]
+
+top mejores / top peores
+
+require("dplyr") top <- train %>%    select(1,2,9,10,4,11,12,13,14) str(top)
+
+data_head <- head(top[order(top$`5year`),])
+
+data_tail <- tail(top[order(top$`5year`),])
+
