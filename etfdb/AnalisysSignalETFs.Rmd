@@ -1,4 +1,10 @@
-## yahoo data -----
+
+---
+title: "ETFproject"
+output: html_document
+
+---
+
 
 
 ```{r yahoo, echo=FALSE}
@@ -11,7 +17,7 @@ library(knitr, warn.conflicts = FALSE, quietly = TRUE)
 
 TES = c("CHOC")
 data.source = c("yahoo")
-suppressWarnings(getData(TES, data.source))
+#a <- suppressWarnings(getData(TES, data.source))
 
 
 getData<-function(tickers,datasrc){

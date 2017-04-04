@@ -1,73 +1,99 @@
 ---
-title: "ETFproject"
-output: html_document
+layout: splash
+title: "mungin eda etfs"
+author: "David M soto (davidmontesoto@gmail.com)"
+date: "april 3, 2017"
+description: "london experiment."
+category: Sample-Posts
+tags: [sample post, code, highlighting]
+comments: true
+share: true
+
+header:
+  image: /assets/images/truedetective.jpg
+
 ---
+
 # Load the required libraries
+
+```{r,  message=FALSE,tidy=T}
+options(warn=-1)
+rm(list = ls()) 
 
 library(data.table) 
 library(bit64)
+library(dplyr) 
 
-rm(list = ls()) getwd()
+options(digits=2)
+train <- readRDS("./input/df.rds") %>% as.data.frame() # SILENCE
 
-library(dplyr) options(digits=2)
-
-train <- readRDS("D:/repos/Scraping/df.rds") %>% as.data.frame() # SILENCE
-str(train)
-
-
+```
 
 #data cleaning
-
+```{r,  message=FALSE,tidy=T}
 
 names(train) <- gsub("[\n]| ",'',names(train))   ## nicer names 
 
-heatmap <- train %>%    select(1,2,9,10,11,12,13,14) summary(heatmap)
+heatmap <- train %>%    select(1,2,9,10,11,12,13,14) 
+summary(heatmap)
 
 names(heatmap)
 
 heatmap[, c(1,2,8)] <- sapply(heatmap[, c(1,2,8)], as.character)
 
-heatmap[, c(3)]<- as.numeric(sub("%", "", heatmap[, c(3)])) heatmap[, c(4)]<-
-as.numeric(sub("%", "", heatmap[, c(4)])) heatmap[, c(5)]<- as.numeric(sub("%",
-"", heatmap[, c(5)])) heatmap[, c(6)]<- as.numeric(sub("%", "",
-heatmap[, c(6)])) heatmap[, c(7)]<- as.numeric(sub("%", "", heatmap[, c(7)]))
+heatmap[, c(3)]<- as.numeric(sub("%", "", heatmap[, c(3)])) 
+heatmap[, c(4)]<- as.numeric(sub("%", "", heatmap[, c(4)])) 
+heatmap[, c(5)]<- as.numeric(sub("%","", heatmap[, c(5)])) 
+heatmap[, c(6)]<- as.numeric(sub("%", "",heatmap[, c(6)])) 
+heatmap[, c(7)]<- as.numeric(sub("%", "", heatmap[, c(7)]))
 
 #train[, c(3)] <- sapply(gsub("[$]", "", train[,3]), as.numeric)
 
 summary(heatmap) #- 106 NAs ..
 
-require(Amelia)
-
 completeHeat <-heatmap[complete.cases(heatmap),]  #**removing NAs
 
 unique(completeHeat$ETFdb.comCategory)
-
+```
 
 #ExploratoryAnalysis heat map by category
 #http://flowingdata.com/2010/01/21/how-to-make-a-heatmap-a-quick-and-easy-solution/
 #https://learnr.wordpress.com/2010/01/26/ggplot2-quick-heatmap-plotting/
 
 
+```{r,  tidy=T}
+
 
 xxx <- aggregate( cbind(completeHeat$`5year` ,  completeHeat$`3year` ,
-completeHeat$`1year` , completeHeat$`4Week` )            ~  ETFdb.comCategory,
-completeHeat, mean )
+completeHeat$`1year` , completeHeat$`4Week` )            ~  ETFdb.comCategory, completeHeat, mean )
 
-data <- xxx[order(xxx$V1),] str(data)
+data <- xxx[order(xxx$V1),]
+str(data)
 
 colnames(data) <- c("Category", "5 Years", "3 Years", "1 Year", "4 weeks") 
 
-rnames <- data[,1] mat_data <- data.matrix(data[,2:ncol(data)])
-rownames(mat_data) <- rnames nba_heatmap <- heatmap(mat_data, Rowv=NA, Colv=NA,
-col = cm.colors(256), scale="column", margins=c(5,10))
+rnames <- data[,1] 
+mat_data <- data.matrix(data[,2:ncol(data)])
+rownames(mat_data) <- rnames 
 
-data <- xxx[cbind(order(xxx$V1),order(xxx$V2)),] data <- xxx[order(xxx$V1),]
 
-top mejores / top peores
+data <- xxx[cbind(order(xxx$V1),order(xxx$V2)),] 
+data <- xxx[order(xxx$V1),]
 
-require("dplyr") top <- train %>%    select(1,2,9,10,4,11,12,13,14) str(top)
+data
+
+```
+#top mejores / top peores
+
+```{r,  message=FALSE,tidy=T}
+
+
+require("dplyr") 
+top <- train %>%   
+select(1,2,9,10,4,11,12,13,14) 
+str(top)
 
 data_head <- head(top[order(top$`5year`),])
 
 data_tail <- tail(top[order(top$`5year`),])
-
+```
