@@ -1,0 +1,79 @@
+
+
+```{r etfdb }
+rm(list = ls())
+
+library('RSelenium')
+library('XML')
+
+remDr <- remoteDriver(remoteServerAddr = "localhost" 
+                      , port = 4445L
+                      , browserName = "firefox"
+                      )
+
+
+
+
+url <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2017/04/28&endDate=2017/09/19&symbol=93036175"
+
+
+
+url <- "https://markets.ft.com/data/funds/tearsheet/historical?s=LU1316549283:GBP"
+
+ remDr$open()
+ remDr$navigate(url)
+ html <- unlist(remDr$getPageSource())
+ tbl<-rbind(readHTMLTable(html)[[3]])
+ 
+ 
+ url <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2017/09/18&endDate=2017/09/19&symbol=93036175"
+
+ 
+```
+
+
+```{r etfdb }
+
+
+
+library('RSelenium')
+library('XML')
+
+remDr <- remoteDriver(remoteServerAddr = "localhost" 
+                      , port = 4445L
+                      , browserName = "firefox"
+                      )
+
+
+ html <- unlist(remDr$getPageSource())
+ grepl("109",html)
+ 
+ tbl<-rbind(readHTMLTable(html)[[3]])
+ 
+ 
+url <- "https://markets.ft.com/data/funds/tearsheet/historical?s=LU1316549283:GBP"
+
+ remDr$open()
+ remDr$navigate(url)
+
+mybrowser <- remDr
+
+datebox <-  mybrowser$findElements(using = "xpath", ""//*[@id='P2004855578']""")
+
+webElem <- mybrowser$findElement(using = 'class',  "mod-ui-table__cell--text")
+
+webElem$getElementAttribute("name")
+
+datebox <- mybrowser$findElements("css selector", "#P1754604023")
+datebox$sendKeysToElement(list("2017/08/01"))
+
+wxbox <- mybrowser$findElement(using = 'css selector', "#inputstring")
+
+wxbutton <- mybrowser$findElement(using = 'css selector', "#btnSearch")
+wxbutton$clickElement()
+mybrowser$goBack()
+wxbox <- mybrowser$findElement(using = 'css selector', "#inputstring")
+
+
+```
+

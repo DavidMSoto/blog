@@ -1,0 +1,145 @@
+---
+title: "getthefuckout"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part one - meta analisis -
+
+la primera parte es automatizar como sacar los fondos de fidelity de una forma automatica, aqui abajo esta el rollo de 
+
+"docker run -d -p 4445:4444 selenium/standalone-firefox:2.53.0"
+
+```{r etfdb }
+rm(list = ls())
+
+library('RSelenium')
+library('XML')
+
+remDr <- remoteDriver(remoteServerAddr = "localhost" 
+                      , port = 4445L
+                      , browserName = "firefox"
+                      )
+
+
+
+
+url <- "https://www.fidelity.co.uk/investor/funds/fund-supermarket.page#ASSET_CLASS_CAT|Property%20-%20Listed"
+
+
+ remDr$open()
+ remDr$navigate(url)
+ 
+ grep('SIRBA',  remDr$getPageSource(), ignore.case=T)
+ 
+pos = gregexpr('SIRBA', remDr$getPageSource())
+ 
+
+
+ html <- unlist(remDr$getPageSource())
+ 
+ pos = gregexpr('SIRBA', html)
+ 
+  grep('SIRBA', html)
+ tbl<-rbind(readHTMLTable(html))
+ 
+  tbl<-readHTMLTable(html)
+   grepl('SIRBA', tbl)
+  
+  webElems <- remDr$findElements("css selector", "#button-1084-btnEl")
+  
+    webElems <- remDr$findElements("css selector", "  #gridview-1070 > table:nth-child(1)")
+
+  webElems$getElementAttribute("outerHTML")[[1]]
+  
+  webElems[[1]]$clickElement()
+summary(tbl)
+
+
+ 
+```
+
+
+##Atencion que mi colega el andrew tiene un post con el  fidelity.
+
+http://brooksandrew.github.io/simpleblog/articles/scraping-with-selenium/
+```{r pressure, echo=FALSE}
+
+library("RSelenium")
+startServer()
+mybrowser <- remoteDriver()
+mybrowser <- remDr
+mybrowser$open()
+mybrowser$navigate("https://www.fidelity.co.uk/investor/funds/fund-supermarket.page#ASSET_CLASS_CAT|Property%20-%20Listed")
+wxbutton <- mybrowser$findElement(using = 'css selector',"#button-1084-btnEl")
+
+
+wxbutton$clickElement()
+
+mybrowser$goBack()
+wxbox <- mybrowser$findElement(using = 'css selector', "#inputstring")
+wxbox$sendKeysToElement(list("01701", "\uE007"))
+  
+```  
+  
+
+## un ejemplo que ya veremos si funciona o no - fuente http://johndharrison.github.io/RSOCRUG/#8
+
+
+
+```{r pressure, echo=FALSE}
+
+testAppScript <- function(remDr){
+  remDr$open(); remDr$setImplicitWaitTimeout(2000)
+  remDr$navigate("http://spark.rstudio.com/johnharrison/shinytestapp/")
+  Sys.sleep(2)
+  webElems <- remDr$findElements("css selector", "#button-1084")
+  lapply(webElems, function(x){x$highlightElement()})
+  Sys.sleep(2)
+  appIds <- c("summary", "distPlot", "ggPlot", "dttable")
+  lapply(seq_along(webElems), function(x){
+    if(!webElems[[x]]$isElementSelected()[[1]]){
+      webElems[[x]]$clickElement()
+      # test for its output
+      out <- remDr$findElement("id", appIds[x])
+      out$highlightElement()
+    }})
+  remDr$close()
+}
+testAppScript(remDr)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##PART TWO
+##"The investor's chief problem—and even his worst enemy—is likely to be himself."
+
+
+All investing is a form of market timing,
+
+https://www.quantmod.com/examples/intro/
+
+https://markets.ft.com/data/funds/tearsheet/historical?s=LU1316549283:GBP
+
+https://uk.finance.yahoo.com/quote/GB0001732584.L/history?ltr=1
+
+https://www.thebalance.com/timing-market-mutual-funds-2466824

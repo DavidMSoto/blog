@@ -1,0 +1,114 @@
+---
+title: "ftportfolio"
+author: "david soto" 
+date: "9/22/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## fondos
+
+Pictet Biotech-I dy GBP	LU0448836352
+https://markets.ft.com/data/funds/tearsheet/historical?s=LU1316549283:GBP  --> 93036175
+
+'BlackRock Gold & General Fund Class D Acc'	'GB00B5ZNJ896'  -- > '53056179'
+https://markets.ft.com/data/funds/tearsheet/summary?s=GB00B5ZNJ896:GBX
+
+
+ETFS Physical Silver	JE00B1VS3333
+https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2017/08/01&endDate=2017/09/22&symbol=9119981
+
+
+M&G Optimal Income Fund I Acc	GB00B1H05718
+https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2017/08/01&endDate=2017/09/22&symbol=28287336
+
+Jupiter Strategic Bond I Class Inc	GB00B544HM32
+https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2017/08/01&endDate=2017/09/22&symbol=38430443
+
+
+
+```{r start}
+rm(list = ls())
+
+library(jsonlite) 
+library(XML)
+library(dplyr) 
+library(RCurl)
+library(stringr)
+
+df <- data.frame(Date=as.Date(character()),
+		File=character(), 
+		User=character(), 
+		stringsAsFactors=FALSE) 
+
+
+isin <- c('LU0448836352' ,'GB00B5ZNJ896','JE00B1VS3333','GB00B1H05718','GB00B544HM32' )
+
+fundsname <- c('Pictet Biotech-I', 'BlackRock Gold & General Fund Class D Acc', 'ETFS Physical Silver' , 'M&G Optimal Income Fund I Acc', 'Jupiter Strategic Bond I Class Inc'  )
+
+ftid <- c( '93036175' , '53056179','9119981','28287336' ,'38430443')
+
+
+baseURL <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2017/08/01&endDate=2017/09/19&symbol="
+
+
+for (i in 1:5){
+
+
+url = paste0(baseURL,ftid[i])
+
+ft.xml <- getURL(url) %>% fromJSON() %>%  htmlParse(asText = TRUE) 
+                 
+xmltop = xmlRoot(ft.xml) #gives content of root
+ft.df =ldply(xmlToList(xmltop[[1]]), data.frame) 
+
+ft.df <- ft.df [-1,c(5,8,9,10,11)] # select the columns we need 
+
+names(ft.df )<-c("date","open","close","high","close") # rename de columms
+
+ft.df [ , "ftid"] <- ftid[i]
+ft.df [ , "fundsname"] <- fundsname[i]
+ft.df [ , "isin"] <- isin[i]
+df <-rbind( df ,ft.df )
+
+}
+
+
+
+```
+
+## Including Plots
+
+https://www.quantinsti.com/blog/an-example-of-a-trading-strategy-coded-in-r/
+
+
+```{r pressure, echo=FALSE}
+
+require(quantmod)
+require(PerformanceAnalytics)
+
+
+  
+  
+
+data=TSLA[,4]
+macd = MACD(data, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
+#chartSeries(data, TA='addMACD()')
+signal = Lag(ifelse(macd$macd < macd$signal, -1, 1))
+returns = ROC(data)*signal
+returns = returns['2016-01-01/2016-12-31']
+portfolio = exp(cumsum(returns))
+plot(portfolio)
+table.Drawdowns(returns, top=10)
+table.DownsideRisk(returns)
+charts.PerformanceSummary(returns)
+
+
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
