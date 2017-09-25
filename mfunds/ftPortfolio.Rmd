@@ -35,9 +35,11 @@ rm(list = ls())
 
 library(jsonlite) 
 library(XML)
-library(dplyr) 
+
 library(RCurl)
 library(stringr)
+
+library(plyr)
 
 df <- data.frame(Date=as.Date(character()),
 		File=character(), 
@@ -52,7 +54,7 @@ fundsname <- c('Pictet Biotech-I', 'BlackRock Gold & General Fund Class D Acc', 
 ftid <- c( '93036175' , '53056179','9119981','28287336' ,'38430443')
 
 
-baseURL <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2017/08/01&endDate=2017/09/19&symbol="
+baseURL <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2016/01/01&endDate=2017/09/19&symbol="
 
 
 for (i in 1:5){
@@ -76,13 +78,51 @@ df <-rbind( df ,ft.df )
 
 }
 
+setwd("~/dataScience/blog/mfunds/input/")
+
+ saveRDS(df, file.path(getwd(), "ftfunds.rds"))
 
 
 ```
 
-## Including Plots
+## a little of 
 
 https://www.quantinsti.com/blog/an-example-of-a-trading-strategy-coded-in-r/
+
+
+```{r yahoo, echo=FALSE}
+# Clear the workspace
+rm(list=ls())
+
+# Set working directory
+setwd("~/dataScience/blog/mfunds/")
+
+# Load the required libraries
+funds <- readRDS(file.path(getwd(), "ftfunds.rds"))
+
+funds$fecha_dato <- as.Date(funds$date, format="%a, %b %d, %Y")
+
+LU0448836352 <- filter(funds, isin == 'LU0448836352')
+
+x <- xts(LU0448836352$close,LU0448836352$fecha_dato)
+
+x <- xts(as.numeric(x[,1]), index(x)) #xts / zoo objects are a matrix with an index attribute. 
+chartSeries(x, TA=NULL)
+
+macd = MACD(x, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
+chartSeries(x, TA='addMACD()')
+signal = Lag(ifelse(macd$macd < macd$signal, -1, 1))
+returns = ROC(x)*signal
+returns = returns['2017-01-01/2017-06-01']
+portfolio = exp(cumsum(returns))
+plot(portfolio)
+table.Drawdowns(returns, top=5)
+table.DownsideRisk(returns)
+charts.PerformanceSummary(returns)
+
+
+
+```
 
 
 ```{r pressure, echo=FALSE}
@@ -91,18 +131,22 @@ require(quantmod)
 require(PerformanceAnalytics)
 
 
-  
-  
+  getSymbols("TSLA",src="google")
+
 
 data=TSLA[,4]
+
+
+chartSeries(Z.x, TA=NULL)
+
 macd = MACD(data, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
-#chartSeries(data, TA='addMACD()')
+chartSeries(data, TA='addMACD()')
 signal = Lag(ifelse(macd$macd < macd$signal, -1, 1))
 returns = ROC(data)*signal
 returns = returns['2016-01-01/2016-12-31']
 portfolio = exp(cumsum(returns))
 plot(portfolio)
-table.Drawdowns(returns, top=10)
+table.Drawdowns(returns, top=5)
 table.DownsideRisk(returns)
 charts.PerformanceSummary(returns)
 
