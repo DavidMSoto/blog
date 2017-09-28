@@ -35,9 +35,9 @@ df <- data.frame(Date=as.Date(character()),
 		User=character(), 
 		stringsAsFactors=FALSE) 
 
-url_ft_base <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2017/07/30&endDate=2017/09/26&symbol="
+url_ft_base <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2015/07/30&endDate=2017/09/26&symbol="
 
-for (i in 1:5){
+for (i in 1:50){
 
   url_ft = paste0(url_ft_base,selected[i,2]) # second column is sthe isnn
   
