@@ -1,0 +1,63 @@
+---
+title: "top 50 fidelity funds"
+author: "david soto"
+date: "9/27/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls())
+setwd("~/dataScience/blog/mfunds/")
+library(data.table)
+system("ls -l ./input")
+selected = fread('./input/top50.csv')
+head (selected)
+
+#un poco de analisys de lo que van los 50 fondos
+
+```
+
+## use financial times to get the historical prices
+
+
+```{r scraping,include=FALSE} 
+
+
+library(jsonlite) 
+library(XML)
+
+library(RCurl)
+library(stringr)
+library(plyr)
+
+df <- data.frame(Date=as.Date(character()),
+		File=character(), 
+		User=character(), 
+		stringsAsFactors=FALSE) 
+
+url_ft_base <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2017/07/30&endDate=2017/09/26&symbol="
+
+for (i in 1:5){
+
+  url_ft = paste0(url_ft_base,selected[i,2]) # second column is sthe isnn
+  
+  ft.xml <- getURL(url_ft) %>% fromJSON() %>%  htmlParse(asText = TRUE) 
+  xmltop = xmlRoot(ft.xml) #gives content of root
+  ft.df =ldply(xmlToList(xmltop[[1]]), data.frame) 
+  
+  ft.df <- ft.df [-1,c(5,8,9,10,11)] # select the columns we need 
+  
+  names(ft.df )<-c("date","open","close","high","low") # rename de columms
+  ft.df [ , "fundsname"] <- selected[i,1] #
+  ft.df [ , "isin"] <-selected[i,2]       #
+  ft.df$date <- as.Date(ft.df$date, format="%a, %b %d, %Y")
+ 
+  
+  df <-rbind( df ,ft.df )
+}
+
+saveRDS(df, file.path(getwd(), "./input/selected50.rds"))
+  summary(df) # hay que corregir los numericos
+
+```
+

@@ -38,9 +38,9 @@ library(XML)
 
 library(RCurl)
 library(stringr)
-
 library(plyr)
 
+setwd("~/dataScience/blog/mfunds/input/")
 df <- data.frame(Date=as.Date(character()),
 		File=character(), 
 		User=character(), 
@@ -54,7 +54,10 @@ fundsname <- c('Pictet Biotech-I', 'BlackRock Gold & General Fund Class D Acc', 
 ftid <- c( '93036175' , '53056179','9119981','28287336' ,'38430443')
 
 
-baseURL <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2016/01/01&endDate=2017/09/19&symbol="
+startDate = "2015/08/01"
+today = "2017/09/23"
+
+baseURL <- paste0("https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=", startDate, "&endDate=",today,"&symbol=")
 
 
 for (i in 1:5){
@@ -78,21 +81,39 @@ df <-rbind( df ,ft.df )
 
 }
 
-setwd("~/dataScience/blog/mfunds/input/")
+df$fecha_dato <- as.Date(df$date, format="%a, %b %d, %Y")
 
- saveRDS(df, file.path(getwd(), "ftfunds.rds"))
+
+ saveRDS(df, file.path(getwd(), "hftfunds.rds"))
 
 
 ```
 
-## a little of 
+##updating data
+
+```{r yahoo, echo=FALSE}
+library(ggplot2)
+library(plotly)
+funds <- df
+
+
+p <- plot_ly(GB00B544HM32, x = ~fecha_dato, y = ~close.1, type = 'scatter', mode = 'lines')
+p
+
+```
+
+
+
+## MACD Back Test
 
 https://www.quantinsti.com/blog/an-example-of-a-trading-strategy-coded-in-r/
 
 
 ```{r yahoo, echo=FALSE}
 # Clear the workspace
-rm(list=ls())
+require(quantmod)
+require(PerformanceAnalytics)
+
 
 # Set working directory
 setwd("~/dataScience/blog/mfunds/")
@@ -100,7 +121,6 @@ setwd("~/dataScience/blog/mfunds/")
 # Load the required libraries
 funds <- readRDS(file.path(getwd(), "ftfunds.rds"))
 
-funds$fecha_dato <- as.Date(funds$date, format="%a, %b %d, %Y")
 
 LU0448836352 <- filter(funds, isin == 'LU0448836352')
 
@@ -127,32 +147,11 @@ charts.PerformanceSummary(returns)
 
 ```{r pressure, echo=FALSE}
 
-require(quantmod)
-require(PerformanceAnalytics)
 
-
-  getSymbols("TSLA",src="google")
-
-
-data=TSLA[,4]
-
-
-chartSeries(Z.x, TA=NULL)
-
-macd = MACD(data, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
-chartSeries(data, TA='addMACD()')
-signal = Lag(ifelse(macd$macd < macd$signal, -1, 1))
-returns = ROC(data)*signal
-returns = returns['2016-01-01/2016-12-31']
-portfolio = exp(cumsum(returns))
-plot(portfolio)
-table.Drawdowns(returns, top=5)
-table.DownsideRisk(returns)
-charts.PerformanceSummary(returns)
 
 
 
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
