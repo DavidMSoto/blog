@@ -1,0 +1,112 @@
+---
+title: "signalSelected"
+author: "david soto"
+date: "9/28/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+rm(list = ls())
+
+require(quantmod)
+require(PerformanceAnalytics)
+
+#setwd("~/dataScience/blog/mfunds/")
+setwd("D:\\repos\\blog-master\\mfunds\\")
+
+
+selected <- readRDS("input/selected50.rds") 
+GB00B76MD544 <- filter(selected,  isin == "GB00B76MD544")
+
+GB00B76MD544$close <-as.numeric(gsub(",", "", GB00B76MD544$close, fixed = TRUE))
+
+
+x <- xts( GB00B76MD544$close,GB00B76MD544$date)
+
+ 
+chartSeries(x, TA=NULL)
+
+
+
+p <- plot_ly(GB00B76MD544, x = ~date, y = ~close, type = 'scatter', mode = 'lines')
+p
+
+
+macd = MACD(x, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
+
+```
+
+
+
+
+
+```{r setup, include=FALSE}
+
+
+library(TTR) #  **
+library(rvest)
+library(pbapply)
+library(TTR)
+library(dygraphs)
+library(lubridate)
+
+
+#plot(x[,1])
+
+
+
+#SMA(x[,1], 200)
+#SMA(x[,1], 50)
+
+
+mov.avgs<-function(stock.df){
+  stock.close<-stock.df[,1]
+  ifelse((nrow(stock.df)<(2*260)),
+         x<-data.frame(stock.df, 'NA', 'NA'),
+         x<-data.frame(stock.df, SMA(stock.close, 200), SMA(stock.close, 50)))
+  colnames(x)<-c(names(stock.df), 'sma_200','sma_50')
+  x<-x[complete.cases(x$sma_200),]
+  return(x)
+}
+
+
+
+stocksTS <- pblapply(x, mov.avgs)
+
+
+dygraph(stocksTS[[1]][,c('sma_200','sma_50')],main = 'Moving Averages') %>%
+  dySeries('sma_50', label = 'sma 50') %>%
+  dySeries('sma_200', label = 'sma 200') 
+
+
+
+# %>% dyRangeSelector(height = 30) %>%
+ # dyShading(from = '2016-4-28', to = '2016-7-27', color = '#CCEBD6') %>%
+  #dyShading(from = '2016-7-28', to = '2016-12-30', color = '#FFE6E6')
+
+
+
+
+```
+
+
+
+### back test
+
+```{r setup, include=FALSE}
+
+macd = MACD(x, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
+chartSeries(x, TA='addMACD()')
+signal = Lag(ifelse(macd$macd < macd$signal, -1, 1))
+returns = ROC(x)*signal
+returns = returns['2017-01-01/2017-06-01']
+portfolio = exp(cumsum(returns))
+plot(portfolio)
+table.Drawdowns(returns, top=5)
+table.DownsideRisk(returns)
+charts.PerformanceSummary(returns)
+
+```
+
+
