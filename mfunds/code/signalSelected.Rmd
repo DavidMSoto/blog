@@ -15,23 +15,18 @@ we can use the quantmod and the PerformanceAnalytics to make some signal system 
 ```{r setup, include=FALSE}
 
 rm(list = ls())
+require(quantmod)
 
 
-
-#setwd("~/dataScience/blog/mfunds/")
-setwd("D:\\repos\\blog-master\\mfunds\\")
-
-
-selected <- readRDS("input/selected50.rds")  %>% as.data.frame()
-
-selected$date <- as.Date(selected$date, format="%a, %b %d, %Y") # date format
-
-converToNumeric = function(x) { as.numeric(gsub(",", "", x, fixed = TRUE)) }
-selected[,2:5] = sapply(selected[,2:5], converToNumeric) # numeric format
+setwd("~/dataScience/blog/mfunds/")
+#setwd("D:\\repos\\blog-master\\mfunds\\")
 
 
-GB00B76MD544 <- dplyr::filter(selected,  isin == "GB00B76MD544")
-x <- xts( GB00B76MD544$close ,GB00B76MD544$date)
+selected <- readRDS("../input/selected5.rds")  %>% as.data.frame()
+
+GB00B7778087 <- dplyr::filter(selected,  isin == "GB00B7778087")
+
+x <- xts( GB00B7778087$Close ,GB00B7778087$date)
 chartSeries(x, TA=NULL)
 
 

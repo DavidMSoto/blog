@@ -10,8 +10,8 @@ rm(list = ls())
 setwd("~/dataScience/blog/mfunds/")
 library(data.table)
 system("ls -l ./input")
-selected = fread('./input/top50.csv')
-head (selected)
+selected_fidelity = fread('./input/top50.csv')
+head (selected_fidelity)
 
 #un poco de analisys de lo que van los 50 fondos
 
@@ -30,34 +30,167 @@ library(RCurl)
 library(stringr)
 library(plyr)
 
-df <- data.frame(Date=as.Date(character()),
-		File=character(), 
-		User=character(), 
+
+
+
+url_ft_base <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2016/07/30&endDate=2017/10/03&symbol="
+
+df <- data.frame(
 		stringsAsFactors=FALSE) 
 
-url_ft_base <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2015/07/30&endDate=2017/09/26&symbol="
-
 for (i in 1:50){
+  
 
-  url_ft = paste0(url_ft_base,selected[i,2]) # second column is sthe isnn
+  url_ft = paste0(url_ft_base,selected_fidelity[i,2]) # second column is sthe isnn
   
   ft.xml <- getURL(url_ft) %>% fromJSON() %>%  htmlParse(asText = TRUE) 
   xmltop = xmlRoot(ft.xml) #gives content of root
   ft.df =ldply(xmlToList(xmltop[[1]]), data.frame) 
   
-  ft.df <- ft.df [-1,c(5,8,9,10,11)] # select the columns we need 
+  ft.df <- ft.df [-1,c(5,8,9,10,11,12)] # select the columns we need 
   
   names(ft.df )<-c("date","Open","High","Low","Close","Volume") # rename de columms
-  ft.df [ , "fundsname"] <- selected[i,1] #
-  ft.df [ , "isin"] <-selected[i,2]       #
- 
-      
-  
+  ft.df [ , "fundsname"] <- selected_fidelity[i,1] #
+  ft.df [ , "isin"] <-selected_fidelity[i,2]       #
+   ft.df [ , "AssetClass"] <-selected_fidelity[i,4]  
+  ft.df [ , "Mcategory"] <-selected_fidelity[i,6]  
   df <-rbind( df ,ft.df )
 }
 
-saveRDS(df, file.path(getwd(), "./input/selected50.rds"))
-  summary(df) # hay que corregir los numericos
+```
+
+#data munging
+Lets format the historical data from the financial times and store it, we will use this historical data for some analysis and backtesting in other post. 
+
+```{r  munging,include=FALSE} 
+df[,1] <- as.Date(df[,1], format="%a, %b %d, %Y") # date format
+converToNumeric = function(x) { as.numeric(gsub(",", "", x, fixed = TRUE)) }
+df[,2:6] = sapply(df[,2:6], converToNumeric) # numeric format
+
+saveRDS(df, file.path(getwd(), "../input/selected50.rds"))
 
 ```
 
+#EDA
+
+```{r scraping,include=FALSE} 
+
+rm(list = ls())
+library(plotly)
+
+selected <- readRDS("../input/selected5.rds")  %>% as.data.frame()
+
+GB00B7778087 <- dplyr::filter(selected,  isin == "GB00B7778087")
+p <- plot_ly(GB00B7778087 , x = ~date, y = ~Close, type = 'scatter', mode = 'lines')
+print(p)
+
+
+
+
+```
+
+#EDA for sectors
+https://moderndata.plot.ly/time-series-charts-by-the-economist-in-r-using-plotly/
+
+```{r scraping,include=FALSE} 
+
+
+unique(selected$AssetClass)
+
+
+Bonds <- dplyr::filter(selected,  AssetClass == "Bonds")
+unique(Bonds$fundsname)
+
+Alternatives <- dplyr::filter(selected,  AssetClass == "Alternatives")
+unique(Alternatives$isin)
+
+
+p <- plot_ly(dplyr::filter(Alternatives,  isin == "GB00BPFJCN32") , 
+             x = ~date, y = ~Close, type = 'scatter', mode = 'lines') %>%
+   add_lines(dplyr::filter(Alternatives,  isin == "GB00BPFJCF57") ,
+             x = ~date, y = ~Close, type = 'scatter', mode = 'lines') 
+p
+
+
+p <- plot_ly(Alternatives , x = ~date, y = ~Close, type = 'scatter', mode = 'lines' , group = 'isin')
+
+p
+
+
+p <- plot_ly(dplyr::filter(Alternatives,  isin == "GB00BPFJCN32") ,
+             x = ~date , y = ~Close, line = list(color = "#de6e6e", width = 1))  %>%
+  add_lines(dplyr::filter(Alternatives,  isin == "GB00BPFJCF57") , 
+            x = ~date , y = ~Close, line = list(color = "#00526d", width = 1))
+
+print(p)
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+```{r scraping,include=FALSE} 
+
+
+
+library(TTR) #  **
+library(rvest)
+library(pbapply)
+library(TTR)
+library(dygraphs)
+library(lubridate)
+
+
+
+x <- dplyr::filter(Alternatives,  isin == "GB00BPFJCF57")
+
+x <- xts( GB00B7778087$Close ,GB00B7778087$date)
+
+macd = MACD(x, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
+
+#plot(x[,1])
+
+
+
+#SMA(x[,1], 200)
+#SMA(x[,1], 50)
+
+
+mov.avgs<-function(stock.df){
+  stock.close<-stock.df[,1]
+  ifelse((nrow(stock.df)<(2*260)),
+         x<-data.frame(stock.df, 'NA', 'NA'),
+         x<-data.frame(stock.df, SMA(stock.close, 200), SMA(stock.close, 50)))
+  colnames(x)<-c(names(stock.df), 'sma_200','sma_50')
+  x<-x[complete.cases(x$sma_200),]
+  return(x)
+}
+
+
+
+stocksTS <- pblapply(x, mov.avgs)
+
+
+dygraph(stocksTS[[1]][,c('sma_200','sma_50')],main = 'Moving Averages') %>%
+  dySeries('sma_50', label = 'sma 50') %>%
+  dySeries('sma_200', label = 'sma 200')  %>% dyRangeSelector(height = 30) %>%
+dyShading(from = '2016-4-28', to = '2016-7-27', color = '#CCEBD6') %>%
+ dyShading(from = '2016-7-28', to = '2016-12-30', color = '#FFE6E6')
+
+```
