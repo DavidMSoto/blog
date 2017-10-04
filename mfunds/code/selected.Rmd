@@ -47,11 +47,11 @@ for (i in 1:50){
   
   ft.df <- ft.df [-1,c(5,8,9,10,11)] # select the columns we need 
   
-  names(ft.df )<-c("date","open","close","high","low") # rename de columms
+  names(ft.df )<-c("date","Open","High","Low","Close","Volume") # rename de columms
   ft.df [ , "fundsname"] <- selected[i,1] #
   ft.df [ , "isin"] <-selected[i,2]       #
-  ft.df$date <- as.Date(ft.df$date, format="%a, %b %d, %Y")
  
+      
   
   df <-rbind( df ,ft.df )
 }

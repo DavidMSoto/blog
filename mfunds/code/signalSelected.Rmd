@@ -5,35 +5,56 @@ date: "9/28/2017"
 output: html_document
 ---
 
+#intro
+
+At this point that we have already the historical data from the selected 50,
+we can use the quantmod and the PerformanceAnalytics to make some signal system or even some backtesting. 
+
+
+
 ```{r setup, include=FALSE}
 
 rm(list = ls())
 
-require(quantmod)
-require(PerformanceAnalytics)
+
 
 #setwd("~/dataScience/blog/mfunds/")
 setwd("D:\\repos\\blog-master\\mfunds\\")
 
 
-selected <- readRDS("input/selected50.rds") 
-GB00B76MD544 <- filter(selected,  isin == "GB00B76MD544")
+selected <- readRDS("input/selected50.rds")  %>% as.data.frame()
 
-GB00B76MD544$close <-as.numeric(gsub(",", "", GB00B76MD544$close, fixed = TRUE))
+selected$date <- as.Date(selected$date, format="%a, %b %d, %Y") # date format
+
+converToNumeric = function(x) { as.numeric(gsub(",", "", x, fixed = TRUE)) }
+selected[,2:5] = sapply(selected[,2:5], converToNumeric) # numeric format
 
 
-x <- xts( GB00B76MD544$close,GB00B76MD544$date)
-
- 
+GB00B76MD544 <- dplyr::filter(selected,  isin == "GB00B76MD544")
+x <- xts( GB00B76MD544$close ,GB00B76MD544$date)
 chartSeries(x, TA=NULL)
 
 
-
-p <- plot_ly(GB00B76MD544, x = ~date, y = ~close, type = 'scatter', mode = 'lines')
+library(plotly)
+p <- plot_ly( dplyr::filter(selected,  isin == "GB00B76MD544"), x = ~date, y = ~close, type = 'scatter', mode = 'lines')
 p
 
 
-macd = MACD(x, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
+selected <- readRDS("input/selected50.rds") 
+
+GB00B76MD544 <- dplyr::filter(selected,  isin == "GB00B76MD544")
+GB00B7FS2455 <- dplyr::filter(selected,  isin == "GB00B7FS2455")
+
+
+
+d1 <- merge(GB00B76MD544, GB00B7FS2455, by = "date", all.x = F)
+
+aa<-select(d1,1,2,6,7,9,12,13)
+
+
+library(plotly)
+p <- plot_ly(aa, x = ~date, y = ~close, type = 'scatter', mode = 'lines', color = 'isin')
+p
 
 ```
 
@@ -51,6 +72,7 @@ library(TTR)
 library(dygraphs)
 library(lubridate)
 
+macd = MACD(x, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
 
 #plot(x[,1])
 
@@ -77,13 +99,9 @@ stocksTS <- pblapply(x, mov.avgs)
 
 dygraph(stocksTS[[1]][,c('sma_200','sma_50')],main = 'Moving Averages') %>%
   dySeries('sma_50', label = 'sma 50') %>%
-  dySeries('sma_200', label = 'sma 200') 
-
-
-
-# %>% dyRangeSelector(height = 30) %>%
- # dyShading(from = '2016-4-28', to = '2016-7-27', color = '#CCEBD6') %>%
-  #dyShading(from = '2016-7-28', to = '2016-12-30', color = '#FFE6E6')
+  dySeries('sma_200', label = 'sma 200')  %>% dyRangeSelector(height = 30) %>%
+dyShading(from = '2016-4-28', to = '2016-7-27', color = '#CCEBD6') %>%
+ dyShading(from = '2016-7-28', to = '2016-12-30', color = '#FFE6E6')
 
 
 
