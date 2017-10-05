@@ -5,9 +5,11 @@ date: "9/27/2017"
 output: html_document
 ---
 
+I've donwnloade this this little dataset from the fidelity webpage
+
 ```{r setup, include=FALSE}
 rm(list = ls())
-setwd("~/dataScience/blog/mfunds/")
+setwd("D:\\repos\\blog\\mfunds\\")
 library(data.table)
 system("ls -l ./input")
 selected_fidelity = fread('./input/top50.csv')
@@ -17,7 +19,7 @@ head (selected_fidelity)
 
 ```
 
-## use financial times to get the historical prices
+## data scraping from financial times to get the historical data of the selected 50 of fidelity.
 
 
 ```{r scraping,include=FALSE} 
@@ -71,21 +73,49 @@ saveRDS(df, file.path(getwd(), "../input/selected50.rds"))
 
 ```
 
-#EDA
+# objetivo
+ahora que tenemos los datos vamos a explorarlos con varias librerias de 
 
 ```{r scraping,include=FALSE} 
 
 rm(list = ls())
+setwd("D:\\repos\\blog\\mfunds\\")
+
 library(plotly)
 
-selected <- readRDS("../input/selected5.rds")  %>% as.data.frame()
-
-GB00B7778087 <- dplyr::filter(selected,  isin == "GB00B7778087")
-p <- plot_ly(GB00B7778087 , x = ~date, y = ~Close, type = 'scatter', mode = 'lines')
-print(p)
+selected <- readRDS("../input/selected5.rds") 
 
 
 
+
+mylist <- split(selected, selected$isin)
+
+a<-mylist[[1]]
+
+
+
+
+
+unique(selected$AssetClass)
+
+  
+UK <- dplyr::filter(selected,  AssetClass == "UK")
+unique(UK$isin)
+
+
+
+plot_ly() %>% 
+  add_trace(data=dplyr::filter(selected,  isin == "GB00B88V3X40"),
+            x = ~date, y = ~Close, type="scatter", mode="lines", name = "GB00B88V3X40") %>% 
+  
+  add_trace(data=dplyr::filter(selected,  isin == "GB00BYSYZP12"),
+            x = ~date, y = ~Close, type="scatter", mode = "lines" , name = "GB00BYSYZP12") %>% 
+  
+  add_trace(data=dplyr::filter(selected,  isin == "GB00B8FCHK57"),
+            x = ~date, y = ~Close, type="scatter", mode = "lines" , name = "GB00B8FCHK57") %>% 
+    add_trace(data=dplyr::filter(selected,  isin == "GB00B7FFF708"),
+              
+            x = ~date, y = ~Close, type="scatter", mode = "lines" , name = "GB00B7FFF708")
 
 ```
 
@@ -95,43 +125,26 @@ https://moderndata.plot.ly/time-series-charts-by-the-economist-in-r-using-plotly
 ```{r scraping,include=FALSE} 
 
 
-unique(selected$AssetClass)
 
 
-Bonds <- dplyr::filter(selected,  AssetClass == "Bonds")
-unique(Bonds$fundsname)
+unique(selected$Mcategory  )
 
-Alternatives <- dplyr::filter(selected,  AssetClass == "Alternatives")
-unique(Alternatives$isin)
+  
+Precious <- dplyr::filter(selected,  Mcategory == "Sector Equity Precious Metals")
+unique(Precious$isin)
+GB00B1XFGM25 <- dplyr::filter(selected,  isin == "GB00B1XFGM25")
+GB00B1XFGM25$SMA26 <- SMA(GB00B1XFGM25$Close, 26)
+GB00B1XFGM25$SMA12 <- SMA(GB00B1XFGM25$Close, 12)
+GB00B1XFGM25$SMA200 <- SMA(GB00B1XFGM25$Close, 200)
 
-
-p <- plot_ly(dplyr::filter(Alternatives,  isin == "GB00BPFJCN32") , 
-             x = ~date, y = ~Close, type = 'scatter', mode = 'lines') %>%
-   add_lines(dplyr::filter(Alternatives,  isin == "GB00BPFJCF57") ,
-             x = ~date, y = ~Close, type = 'scatter', mode = 'lines') 
-p
-
-
-p <- plot_ly(Alternatives , x = ~date, y = ~Close, type = 'scatter', mode = 'lines' , group = 'isin')
-
-p
-
-
-p <- plot_ly(dplyr::filter(Alternatives,  isin == "GB00BPFJCN32") ,
-             x = ~date , y = ~Close, line = list(color = "#de6e6e", width = 1))  %>%
-  add_lines(dplyr::filter(Alternatives,  isin == "GB00BPFJCF57") , 
-            x = ~date , y = ~Close, line = list(color = "#00526d", width = 1))
-
-print(p)
-
-
-
-
-
-
-
-
-
+p <-plot_ly() %>% 
+  add_trace(data= GB00B1XFGM25,
+            x = ~date, y = ~Close, type="scatter", mode="lines", name = "GB00B1XFGM25") %>% 
+  add_trace(x = ~date,y = ~SMA26, type="scatter", mode="lines", name = "SMA26") %>% 
+ add_trace(x = ~date,y = ~SMA12, type="scatter", mode="lines", name = "SMA12") %>% 
+   add_trace(x = ~date,y = ~SMA200, type="scatter", mode="lines", name = "SMA200") 
+  print(p)
+ 
 
 
 
@@ -149,27 +162,27 @@ print(p)
 
 
 
-library(TTR) #  **
-library(rvest)
-library(pbapply)
-library(TTR)
+library(TTR) #  SMA() for calculating simple moving average
+
+
 library(dygraphs)
 library(lubridate)
 
 
 
-x <- dplyr::filter(Alternatives,  isin == "GB00BPFJCF57")
+GB00B1XFGM25 <- dplyr::filter(selected,  isin == "GB00B1XFGM25")
 
-x <- xts( GB00B7778087$Close ,GB00B7778087$date)
-
-macd = MACD(x, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
-
-#plot(x[,1])
+x <- xts( GB00B1XFGM25$Close ,GB00B1XFGM25$date)
 
 
 
-#SMA(x[,1], 200)
-#SMA(x[,1], 50)
+
+dygraph(x, main = "TWTR Stock Price") 
+
+
+
+SMA(GB00B1XFGM25$Close, 26)
+SMA(GB00B1XFGM25$Close, 12)
 
 
 mov.avgs<-function(stock.df){
