@@ -9,7 +9,8 @@ output: html_document
 
 At this point that we have already the historical data from the selected 50,
 we can use the quantmod and the PerformanceAnalytics to make some signal system or even some backtesting. 
-
+http://www.thertrader.com/2015/07/07/r-financial-time-series-tips-everyone-should-know-about/
+https://rbresearch.wordpress.com/2013/02/19/momentum-in-r-part-4-with-quantstrat/
 
 
 ```{r setup, include=FALSE}
@@ -22,34 +23,6 @@ setwd("~/dataScience/blog/mfunds/")
 #setwd("D:\\repos\\blog-master\\mfunds\\")
 
 
-selected <- readRDS("../input/selected5.rds")  %>% as.data.frame()
-
-GB00B7778087 <- dplyr::filter(selected,  isin == "GB00B7778087")
-
-x <- xts( GB00B7778087$Close ,GB00B7778087$date)
-chartSeries(x, TA=NULL)
-
-
-library(plotly)
-p <- plot_ly( dplyr::filter(selected,  isin == "GB00B76MD544"), x = ~date, y = ~close, type = 'scatter', mode = 'lines')
-p
-
-
-selected <- readRDS("input/selected50.rds") 
-
-GB00B76MD544 <- dplyr::filter(selected,  isin == "GB00B76MD544")
-GB00B7FS2455 <- dplyr::filter(selected,  isin == "GB00B7FS2455")
-
-
-
-d1 <- merge(GB00B76MD544, GB00B7FS2455, by = "date", all.x = F)
-
-aa<-select(d1,1,2,6,7,9,12,13)
-
-
-library(plotly)
-p <- plot_ly(aa, x = ~date, y = ~close, type = 'scatter', mode = 'lines', color = 'isin')
-p
 
 ```
 
@@ -59,44 +32,6 @@ p
 
 ```{r setup, include=FALSE}
 
-
-library(TTR) #  **
-library(rvest)
-library(pbapply)
-library(TTR)
-library(dygraphs)
-library(lubridate)
-
-macd = MACD(x, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
-
-#plot(x[,1])
-
-
-
-#SMA(x[,1], 200)
-#SMA(x[,1], 50)
-
-
-mov.avgs<-function(stock.df){
-  stock.close<-stock.df[,1]
-  ifelse((nrow(stock.df)<(2*260)),
-         x<-data.frame(stock.df, 'NA', 'NA'),
-         x<-data.frame(stock.df, SMA(stock.close, 200), SMA(stock.close, 50)))
-  colnames(x)<-c(names(stock.df), 'sma_200','sma_50')
-  x<-x[complete.cases(x$sma_200),]
-  return(x)
-}
-
-
-
-stocksTS <- pblapply(x, mov.avgs)
-
-
-dygraph(stocksTS[[1]][,c('sma_200','sma_50')],main = 'Moving Averages') %>%
-  dySeries('sma_50', label = 'sma 50') %>%
-  dySeries('sma_200', label = 'sma 200')  %>% dyRangeSelector(height = 30) %>%
-dyShading(from = '2016-4-28', to = '2016-7-27', color = '#CCEBD6') %>%
- dyShading(from = '2016-7-28', to = '2016-12-30', color = '#FFE6E6')
 
 
 

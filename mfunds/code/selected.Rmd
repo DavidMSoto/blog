@@ -9,55 +9,62 @@ I've donwnloade this this little dataset from the fidelity webpage
 
 ```{r setup, include=FALSE}
 rm(list = ls())
-setwd("D:\\repos\\blog\\mfunds\\")
+setwd("~/dataScience/blog/mfunds/")
 library(data.table)
 system("ls -l ./input")
 selected_fidelity = fread('./input/top50.csv')
 head (selected_fidelity)
-
-#un poco de analisys de lo que van los 50 fondos
 
 ```
 
 ## data scraping from financial times to get the historical data of the selected 50 of fidelity.
 
 
+this process will take some minutes and will generate  a file , later on i will post how can we make another process for updating the file so we don't need to download all the historical data from the Financial times all days. 
+
 ```{r scraping,include=FALSE} 
-
-
 library(jsonlite) 
 library(XML)
-
 library(RCurl)
 library(stringr)
 library(plyr)
 
+library(lubridate)
+
+
+end.date <-gsub("-", "/", Sys.Date())
+start.date <-gsub("-", "/", Sys.Date()-years(3))
 
 
 
-url_ft_base <- "https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=2016/07/30&endDate=2017/10/03&symbol="
+url_ft_base <- paste0("https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=", start.date, "&endDate=", end.date, "&symbol=" )
+print(url_ft_base)
+df <- data.frame(stringsAsFactors=FALSE) 
 
-df <- data.frame(
-		stringsAsFactors=FALSE) 
+start.time <- Sys.time()
 
 for (i in 1:50){
   
-
   url_ft = paste0(url_ft_base,selected_fidelity[i,2]) # second column is sthe isnn
-  
   ft.xml <- getURL(url_ft) %>% fromJSON() %>%  htmlParse(asText = TRUE) 
   xmltop = xmlRoot(ft.xml) #gives content of root
   ft.df =ldply(xmlToList(xmltop[[1]]), data.frame) 
   
-  ft.df <- ft.df [-1,c(5,8,9,10,11,12)] # select the columns we need 
+  ft.df <- ft.df [-1,c(5,8,9,10,11)] # select the columns we need 
   
-  names(ft.df )<-c("date","Open","High","Low","Close","Volume") # rename de columms
+  names(ft.df )<-c("date","Open","High","Low","Close") # rename de columms
   ft.df [ , "fundsname"] <- selected_fidelity[i,1] #
   ft.df [ , "isin"] <-selected_fidelity[i,2]       #
-   ft.df [ , "AssetClass"] <-selected_fidelity[i,4]  
+  ft.df [ , "AssetClass"] <-selected_fidelity[i,4]  
   ft.df [ , "Mcategory"] <-selected_fidelity[i,6]  
   df <-rbind( df ,ft.df )
 }
+
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
+
+summary (df)
 
 ```
 
@@ -67,143 +74,8 @@ Lets format the historical data from the financial times and store it, we will u
 ```{r  munging,include=FALSE} 
 df[,1] <- as.Date(df[,1], format="%a, %b %d, %Y") # date format
 converToNumeric = function(x) { as.numeric(gsub(",", "", x, fixed = TRUE)) }
-df[,2:6] = sapply(df[,2:6], converToNumeric) # numeric format
+df[,2:5] = sapply(df[,2:5], converToNumeric) # numeric format
 
 saveRDS(df, file.path(getwd(), "../input/selected50.rds"))
-
-```
-
-# objetivo
-ahora que tenemos los datos vamos a explorarlos con varias librerias de 
-
-```{r scraping,include=FALSE} 
-
-rm(list = ls())
-setwd("D:\\repos\\blog\\mfunds\\")
-
-library(plotly)
-
-selected <- readRDS("../input/selected5.rds") 
-
-
-
-
-mylist <- split(selected, selected$isin)
-
-a<-mylist[[1]]
-
-
-
-
-
-unique(selected$AssetClass)
-
-  
-UK <- dplyr::filter(selected,  AssetClass == "UK")
-unique(UK$isin)
-
-
-
-plot_ly() %>% 
-  add_trace(data=dplyr::filter(selected,  isin == "GB00B88V3X40"),
-            x = ~date, y = ~Close, type="scatter", mode="lines", name = "GB00B88V3X40") %>% 
-  
-  add_trace(data=dplyr::filter(selected,  isin == "GB00BYSYZP12"),
-            x = ~date, y = ~Close, type="scatter", mode = "lines" , name = "GB00BYSYZP12") %>% 
-  
-  add_trace(data=dplyr::filter(selected,  isin == "GB00B8FCHK57"),
-            x = ~date, y = ~Close, type="scatter", mode = "lines" , name = "GB00B8FCHK57") %>% 
-    add_trace(data=dplyr::filter(selected,  isin == "GB00B7FFF708"),
-              
-            x = ~date, y = ~Close, type="scatter", mode = "lines" , name = "GB00B7FFF708")
-
-```
-
-#EDA for sectors
-https://moderndata.plot.ly/time-series-charts-by-the-economist-in-r-using-plotly/
-
-```{r scraping,include=FALSE} 
-
-
-
-
-unique(selected$Mcategory  )
-
-  
-Precious <- dplyr::filter(selected,  Mcategory == "Sector Equity Precious Metals")
-unique(Precious$isin)
-GB00B1XFGM25 <- dplyr::filter(selected,  isin == "GB00B1XFGM25")
-GB00B1XFGM25$SMA26 <- SMA(GB00B1XFGM25$Close, 26)
-GB00B1XFGM25$SMA12 <- SMA(GB00B1XFGM25$Close, 12)
-GB00B1XFGM25$SMA200 <- SMA(GB00B1XFGM25$Close, 200)
-
-p <-plot_ly() %>% 
-  add_trace(data= GB00B1XFGM25,
-            x = ~date, y = ~Close, type="scatter", mode="lines", name = "GB00B1XFGM25") %>% 
-  add_trace(x = ~date,y = ~SMA26, type="scatter", mode="lines", name = "SMA26") %>% 
- add_trace(x = ~date,y = ~SMA12, type="scatter", mode="lines", name = "SMA12") %>% 
-   add_trace(x = ~date,y = ~SMA200, type="scatter", mode="lines", name = "SMA200") 
-  print(p)
- 
-
-
-
-```
-
-
-
-
-
-
-
-
-
-```{r scraping,include=FALSE} 
-
-
-
-library(TTR) #  SMA() for calculating simple moving average
-
-
-library(dygraphs)
-library(lubridate)
-
-
-
-GB00B1XFGM25 <- dplyr::filter(selected,  isin == "GB00B1XFGM25")
-
-x <- xts( GB00B1XFGM25$Close ,GB00B1XFGM25$date)
-
-
-
-
-dygraph(x, main = "TWTR Stock Price") 
-
-
-
-SMA(GB00B1XFGM25$Close, 26)
-SMA(GB00B1XFGM25$Close, 12)
-
-
-mov.avgs<-function(stock.df){
-  stock.close<-stock.df[,1]
-  ifelse((nrow(stock.df)<(2*260)),
-         x<-data.frame(stock.df, 'NA', 'NA'),
-         x<-data.frame(stock.df, SMA(stock.close, 200), SMA(stock.close, 50)))
-  colnames(x)<-c(names(stock.df), 'sma_200','sma_50')
-  x<-x[complete.cases(x$sma_200),]
-  return(x)
-}
-
-
-
-stocksTS <- pblapply(x, mov.avgs)
-
-
-dygraph(stocksTS[[1]][,c('sma_200','sma_50')],main = 'Moving Averages') %>%
-  dySeries('sma_50', label = 'sma 50') %>%
-  dySeries('sma_200', label = 'sma 200')  %>% dyRangeSelector(height = 30) %>%
-dyShading(from = '2016-4-28', to = '2016-7-27', color = '#CCEBD6') %>%
- dyShading(from = '2016-7-28', to = '2016-12-30', color = '#FFE6E6')
 
 ```
