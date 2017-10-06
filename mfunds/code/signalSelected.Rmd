@@ -9,7 +9,9 @@ output: html_document
 
 At this point that we have already the historical data from the selected 50,
 we can use the quantmod and the PerformanceAnalytics to make some signal system or even some backtesting. 
+
 http://www.thertrader.com/2015/07/07/r-financial-time-series-tips-everyone-should-know-about/
+
 https://rbresearch.wordpress.com/2013/02/19/momentum-in-r-part-4-with-quantstrat/
 
 
@@ -27,12 +29,19 @@ setwd("~/dataScience/blog/mfunds/")
 ```
 
 
+hipotesis, 
+
+Mean reversion is a theory that suggests that the prices eventually move back to their average value
+
+
+https://www.r-bloggers.com/backtesting-a-simple-stock-trading-strategy/
+
+The strategy is simple: Find the high point of the stock over the last 200 days, 
+and count the number of days that have elapsed since that high.  If its been more less than 100 days, own the stock.
 
 
 
 ```{r setup, include=FALSE}
-
-
 
 
 
