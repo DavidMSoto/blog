@@ -1,0 +1,95 @@
+---
+title: "Ratings Mainframe Files"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# motivation use partenon files to show cool insights about corporate ratings
+
+
+```{r include=FALSE, cache=FALSE}
+
+library(data.table)
+library(dplyr)
+library(plotly)
+
+
+```
+
+# data munging
+
+
+
+```{r  cache=FALSE}
+rm(list = ls())
+setwd('D:/repos/isban/isa/code')
+train <- fread("../input/F170418")
+
+trainf <- select (train, V1,V2,V5, V6 , V9, V10, V11 , V14)
+names(trainf) <- c('PersonType', 'PersonCode' , 'documentID' ,'DateofSSAA', 'lastUpdate' , 'TypeOfRatings', 'descripcion', 'rscore')
+
+trainf <-
+filter( trainf, TypeOfRatings =='I07'| TypeOfRatings =='I03'  | TypeOfRatings == 'I08'  ) %>%
+ filter(rscore > 0) %>%
+  filter (as.Date(DateofSSAA) > "2015-01-01")
+
+names(trainf) <- c('PersonType', 'PersonCode' , 'documentID' ,'DateofSSAA', 'lastUpdate' , 'ratings', 'descripcion', 'rscore')
+trainf <-trainf[-c(1), ] # there is some faulty records
+
+head(trainf)
+trainf$DateofSSAA <- as.Date( trainf$DateofSSAA, "%Y-%m-%d")
+trainf$Month <- as.Date(cut(trainf$DateofSSAA,breaks = "month"))
+trainf <- trainf[complete.cases(trainf),]
+t_total_count_by_month_and_ratings = trainf %>% group_by(Month, descripcion) %>%   summarise(count= n())
+
+summary(t_total_count_by_month_and_ratings)
+```
+
+# What are the total number of ratings  by month by type?
+
+
+
+```{r}
+
+pp <- plot_ly(t_total_count_by_month_and_ratings, x = ~Month, y = ~count,  type = 'scatter' , mode = 'markers', marker = list(size = 15),color = ~descripcion)  %>%
+
+layout(title = "numbers of ratings by month",  showlegend = TRUE)
+pp
+
+
+```
+
+
+# What are the total number of ratings  by month and average ?
+
+
+```{r}
+
+temp <- trainf %>% select(rscore,Month,descripcion)
+temp <- temp %>% group_by(Month)%>% summarise(score=mean(rscore))
+temp <- na.omit(temp)
+temp <-temp[-c(1,2), ] # there is some faulty records in the database 
+
+
+p <- plot_ly(temp, x = ~Month, y = ~score, name = "score by Month", mode = 'lines+markers',type = 'scatter')
+p %>%
+  
+  add_trace(y = ~fitted(loess(score ~ as.numeric(Month))), x = ~Month,type = 'scatter', mode = 'lines') %>%
+  dplyr::filter(score == max(score)) %>%   layout(annotations = list(x = ~Month, y = ~score, text = "Peak", showarrow = T))  %>%
+  layout(title = "Score by month",  showlegend = FALSE)
+```
+
+
+# How do the average score change for each type of content rating?
+
+
+```{r}
+
+temp <- trainf %>% select(rscore,descripcion)
+temp <- na.omit(temp)
+plot_ly(temp, x = ~rscore, color = ~descripcion, type = "box") %>%
+  layout(title = "average score  for each type of rating",  showlegend = TRUE)
+```

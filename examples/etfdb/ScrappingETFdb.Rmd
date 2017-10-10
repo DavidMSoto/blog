@@ -1,0 +1,73 @@
+---
+title: "ETFproject"
+output: html_document
+
+---
+
+http://www.jacolienvanrij.com/Tutorials/tutorialMarkdown.html
+
+rm(list = ls())
+
+https://docs.docker.com/docker-for-mac/install/#download-docker-for-mac
+
+"docker run -d -p 4445:4444 selenium/standalone-firefox:2.53.0"
+
+http://localhost/
+
+"ps docker"
+
+despues de instalar y correr docker, lo unico que tenemos que hacer es paginar
+las 20 paginas system("docker run -d -p 4445:4444
+selenium/standalone-firefox:2.53.0")
+
+#https://cran.r-project.org/web/packages/RSelenium/vignettes/RSelenium-basics.html
+
+```{r  scrapping, echo=FALSE}
+
+library('RSelenium')
+library('XML')
+
+
+#remDr <- remoteDr(browserName = "firefox", port = 4445L)
+
+
+df <- data.frame(Date=as.Date(character()),
+		File=character(), 
+		User=character(), 
+		stringsAsFactors=FALSE) 
+
+
+baseURL = 'http://etfdb.com/type/sector/all/#etfs&sort_name=assets_under_management&sort_order=desc&page='
+
+for (i in 1:3) {
+	remDr <- remoteDriver(browserName = "firefox",port = 4445L)
+	remDr$open()
+	
+	url = paste0(baseURL,i)
+	remDr$navigate(url)
+	remDr$refresh()
+
+ html <- unlist(remDr$getPageSource())
+ table <- readHTMLTable(html)[[2]]
+ 
+ write.table(table, file = paste0(i , ".csv") )
+ 
+ df <-rbind( df ,table )
+
+ print(unlist(remDr$getCurrentUrl()))
+
+ remDr$close()
+}
+
+
+
+ saveRDS(df, file.path(getwd(), "df.rds"))
+ 
+ 
+
+```
+
+at this point better if we stop Stop / remove all Docker containers to free up some resources in our system. 
+
+docker stop $(docker ps -a -q) 
+docker rm $(docker ps -a -q)

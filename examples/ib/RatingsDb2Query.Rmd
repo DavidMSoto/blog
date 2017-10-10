@@ -1,0 +1,103 @@
+---
+title: "Ratings from Partenon"
+author: "David Soto"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# motivation get cool insight using mainframe as source,
+we need to use as wrapper a sql query 
+
+```{text }
+
+select 
+G9202_TIPOPERS, 
+G9202_CODPERS,
+VARCHAR_FORMAT(  G9201_TIMESINI ,'YYYYMMDD'),
+G9201_IDCICLO, 
+VARCHAR_FORMAT(  G9201_FULTMOD ,'YYYYMM'), 
+VARCHAR_FORMAT(  G9201_FULTMOD ,'YYYYMMDD') ,
+G9201_VALRAT,
+G9201_UID
+
+FROM 
+orgadm.DATOS_CICLO rat,
+orgadm.VALORAC_PERS valo 
+
+where 
+valo.G9202_EXPEDVAL = rat.G9201_EXPEDVAL and
+ rat.g9201_idciclo in ('05','13','03')  
+
+ 
+```
+
+## Including Plots
+Model Rating
+
+'03' - "SME"
+'05' - "IPRE"
+'13' - Automatic SME )
+
+
+```{r include=FALSE, cache=FALSE}
+
+rm(list = ls())
+library(data.table)
+library(dplyr)
+library(plotly)
+library(formattable)
+
+```
+
+
+```{r}
+ratings <- fread("../input/modelsRatings.csv") 
+
+names(ratings) <- c('TIPOPERS', 'CODPERS', 'TIMESINI' , 'TypeRating', 'MOD_Month', 'MOD', 'Score' , 'UID'  )
+
+
+# First create the new field
+ratings$description <- NA
+# Then recode the old field into the new one for the specified rows
+ratings$description [ratings$TypeRating=='13'] <- "Automatic SME"
+ratings$description [ratings$TypeRating=='03'] <- "SME"
+ratings$description [ratings$TypeRating=='05'] <- "IPRE"
+
+ratings$MOD <-as.Date( ratings$MOD, "%Y%m%d")
+ratings$Score <- as.integer(ratings$Score)
+
+
+
+head(ratings)
+
+```
+
+
+#Which users (ldap id) has the highest average rating? Lets display the top 10 users
+
+
+```{r}
+
+temp <- ratings %>% select(UID,Score)
+temp <- temp %>% group_by(UID) %>% summarise(avg=mean(Score))
+temp <- temp %>% arrange(desc(avg))
+temp <- temp[1:10,]
+temp %>%
+  formattable(list(avg = color_bar("red")), align = 'l')
+
+```
+
+#How do the average score change for each type of content rating?
+```{r}
+temp <- ratings %>% select(description,Score)
+temp <- temp %>% group_by(description)%>% summarise(score = mean(Score))
+p <- plot_ly(
+  x = temp$description,
+  y = temp$score,
+  name = "Avg score by Rating",
+  type = "bar")
+p
+```

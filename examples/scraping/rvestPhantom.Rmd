@@ -1,0 +1,162 @@
+---
+title: "ETFproject"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## scrape online text we'll make use of the relatively newer rvest
+
+```{r rvest_dinamic_web}
+library(rvest)
+Sys.setenv(http_proxy="http://dia2.santanderuk.gs.corp:80")
+Sys.getenv("http_proxy")
+
+rvestx <- read_html("http://etfdb.com/type/sector/all/#etfs__overview&sort_name=assets_under_management&sort_order=desc&page=1")
+
+grepl('VNQ', x, ignore.case=F)
+
+posfirst = regexpr('VNQ', x) -100  # Returns position of 1st match in a string
+poslast = regexpr('VNQ', x) + 100
+
+substr(x, posfirst, poslast)
+
+
+rvestx %>% html_node("tbody" ) %>% html_node(" tr" )   %>% html_node("td" )  %>% html_node("a" )    %>% html_text() 
+
+#So, this package only works for static web page,  ...  ?
+
+x %>% html_node(xpath='//*[contains(concat( " ", @class, " " ), concat( " ", "caps", " " ))]') %>% html_text()
+
+
+```
+
+## dinamic websites
+
+lets gather the website as html throuth jsp 
+
+#scrape_techstars.js
+
+#https://www.datacamp.com/community/tutorials/scraping-javascript-generated-data-with-r#gs.er=B0wg
+
+```{js  pressure, echo=FALSE}
+
+
+
+var webPage = require('webpage');
+var page = webPage.create();
+
+var fs = require('fs');
+var path = 'techstars.html'
+
+page.open('http://www.techstars.com/companies/stats/', function (status) {
+  var content = page.content;
+  fs.write(path,content,'w')
+  phantom.exit();
+});
+
+```
+
+
+now that we have the html is easier scrap it. 
+
+tengo una 
+
+table thead tbody tfoot
+
+supongo que algo podr� hacer con esto !
+
+
+```{r rvest_static, echo=FALSE}
+library(rvest)
+system("/Users/davidmonteagudo/git/phantomjs-2.1.1-macosx/bin/phantomjs /Users/davidmonteagudo/git/Scraping/blog/scrape_etf.js")
+
+url <-  "/Users/davidmonteagudo/git/Scraping/techstars.xml"
+
+xmac <- read_html("/Users/davidmonteagudo/git/Scraping/techstars.xml")
+
+x %>% html_node("#etfs :nth-child(1)") %>% html_text()
+
+xmac %>% html_node("tbody" ) %>% html_node(" tr" )   %>% html_node("td" )  %>% html_node("a" )    %>% html_text() 
+ 
+x %>% html_node(xpath='//a') %>% html_text()
+
+x %>% html_node(xpath='//*[contains(concat( " ", @class, " " ), concat( " ", "caps", " " ))]') %>% html_text()
+
+xlocal %>% html_node("bootstrap-table") %>%    html_table(header = TRUE)
+
+
+```
+
+althought as we already have the information we probably should focus in how to
+parse the XML
+
+
+
+
+```{r htmltable, echo=FALSE}
+
+###### Settings
+library(XML)
+ 
+ 
+###### Reading data
+
+localurl <-  "/Users/davidmonteagudo/git/Scraping/techstars.xml"
+etf<-readHTMLTable(localurl)[[2]]
+
+colnames(etf)<-c("Symbol","ETFdb.com Category","Inception")
+
+
+for (i in 2:len) 	{tbl<-rbind(etf,readHTMLTable(url[i])[[2]])}
+ 
+###### Formatting data
+colnames(tbl)<-c("Symbol","ETFdb.com Category","Inception")
+tbl$BirthDate<-as.Date(tbl$BirthDate[1],format="%B %d, %Y")
+
+```
+
+
+## RCurl
+
+```{r  pressure, echo=FALSE}
+
+setwd("C:/temp/")
+
+Sys.setenv(http_proxy="http://dia2.santanderuk.gs.corp:80")
+Sys.getenv("http_proxy")
+
+
+library(RCurl)
+url =  "http://etfdb.com/type/sector/all/#etfs__overview&sort_name=assets_under_management&sort_order=desc&page=1"
+
+# parse url
+
+file <- getURL(url)
+
+ 
+ sink("D:/repos/BlogsEntries/Scraping/htmldata/exaa4.html")
+ file
+ 
+  
+etf<-readHTMLTable("D:/repos/BlogsEntries/Scraping/htmldata/etf_1.html")
+
+etf<-readHTMLTable("D:/repos/BlogsEntries/Scraping/htmldata/exaa4.html")
+
+sink(NULL)
+
+doc<-htmlParse('ex.txt')
+
+
+
+```
+
+
+
+
+
+
+
+
