@@ -79,3 +79,59 @@ df[,2:5] = sapply(df[,2:5], converToNumeric) # numeric format
 saveRDS(df, file.path(getwd(), "../input/selected50.rds"))
 
 ```
+
+#Heat map
+
+```{r  munging,include=FALSE} 
+df[,1] <- as.Date(df[,1], format="%a, %b %d, %Y") # date format
+converToNumeric = function(x) { as.numeric(gsub(",", "", x, fixed = TRUE)) }
+df[,2:5] = sapply(df[,2:5], converToNumeric) # numeric format
+
+saveRDS(df, file.path(getwd(), "../input/selected50.rds"))
+
+```
+
+http://past.rinfinance.com/agenda/2010/JoshUlrich.pdf
+
+```{r  munging,include=FALSE} 
+rm(list = ls())
+setwd("D:\\repos\\blog\\mfunds\\")
+selected <- readRDS("../input/selected50.rds") 
+
+library(TTR) #  rsi() for calculating simple moving average
+GB00BYSYZL73 <- dplyr::filter(selected,  isin == "GB00BYSYZL73")
+
+rsi <- RSI(GB00BYSYZL73$Close, n=14)
+
+GB00BYSYZL73$rsi  <-rsi
+
+```
+
+
+```{r  munging,include=FALSE} 
+df
+setwd("D:\\repos\\blog\\mfunds\\")
+selected <- readRDS("../input/selected50.rds") 
+library(TTR) #  rsi() for calculating simple moving average
+
+
+vector <- unique(selected$isin)
+df <- data.frame(stringsAsFactors=FALSE) 
+
+for (i in vector)
+{
+  
+data <- dplyr::filter(selected,  isin == i)
+  data <- data[order(as.Date(data$date, format="%Y-%m-%d")),]
+  rsi <- RSI(GBxx$Close, n=14)
+  GBxx$rsi <-rsi
+  tail <- tail(GBxx, 1)
+   df <-rbind( df ,tail )
+
+}
+
+
+
+
+```
+

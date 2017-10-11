@@ -15,6 +15,9 @@ http://www.thertrader.com/2015/07/07/r-financial-time-series-tips-everyone-shoul
 https://rbresearch.wordpress.com/2013/02/19/momentum-in-r-part-4-with-quantstrat/
 
 
+The Kelly Criterion - Does It Work?
+https://quantstrattrader.wordpress.com/2017/09/29/the-kelly-criterion-does-it-work/
+
 ```{r setup, include=FALSE}
 
 rm(list = ls())
@@ -29,9 +32,14 @@ setwd("~/dataScience/blog/mfunds/")
 ```
 
 
-hipotesis, 
+trading System , 
+
+
+https://www.quantinsti.com/blog/quantitative-trading-strategy-using-r/
 
 Mean reversion is a theory that suggests that the prices eventually move back to their average value
+
+
 
 
 https://www.r-bloggers.com/backtesting-a-simple-stock-trading-strategy/
@@ -39,13 +47,6 @@ https://www.r-bloggers.com/backtesting-a-simple-stock-trading-strategy/
 The strategy is simple: Find the high point of the stock over the last 200 days, 
 and count the number of days that have elapsed since that high.  If its been more less than 100 days, own the stock.
 
-
-
-```{r setup, include=FALSE}
-
-
-
-```
 
 
 
