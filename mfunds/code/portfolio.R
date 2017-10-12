@@ -1,10 +1,14 @@
 
 rm(list = ls())
-setwd("~/dataScience/blog/mfunds/")
+
+WIN <- TRUE
+if (WIN) {setwd("D:\\repos\\blog\\mfunds\\")} else{setwd("~/dataScience/blog/mfunds/")}
+
+
 
 library(data.table)
 Holdings = fread('./input/AllHoldings.csv')
-Holdings <- Holdings[-c(8), ]
+
 
 AllFundFidelity = fread('./input/AllFundFidelity.csv')
 colnames(AllFundFidelity)[2] <- "isin" # rename the fund name to merge the datasets
