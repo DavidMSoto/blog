@@ -62,12 +62,58 @@ all_products <- all_products[order(all_products$OngoingCharge),]
 
 ```
 
-## Including Plots
+## getting market data 
 
-You can also embed plots, for example:
+again lets use JSON to get market data this time from Financial times. 
+
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
+
+
+getFTData<-function(products,nyear) {
+
+df <- data.frame(stringsAsFactors=FALSE) 
+start.time <- Sys.time()
+end.date <-gsub("-", "/", Sys.Date())
+start.date <-gsub("-", "/", Sys.Date()-years(nyear))
+
+url_ft_base <- paste0("https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=", start.date, "&endDate=", end.date, "&symbol=" )
+for (i in 1:nrow(e)){
+  
+  url_ft = paste0(url_ft_base,products[i,3]) # first column is sthe isnn
+  ft.xml <- getURL(url_ft) %>% fromJSON() %>%  htmlParse(asText = TRUE) 
+  xmltop = xmlRoot(ft.xml) #gives content of root
+  ft.df =ldply(xmlToList(xmltop[[1]]), data.frame) 
+  
+  ft.df <- ft.df [-1,c(5,8,9,10,11)] # select the columns we need 
+  
+  names(ft.df )<-c("date","Open","High","Low","Close") # rename de columms
+  ft.df [ , "fundsname"] <- products[i,2] #
+  ft.df [ , "isin"] <-products[i,3]       #
+  ft.df [ , "lname"] <-products[i,4]  
+  ft.df [ , "category"] <-products[i,5]  
+  df <-rbind( df ,ft.df )
+}
+
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+print(time.taken)
+
+return(df)
+
+}
+
+ft <-getFTData (e, 1)
+
+
+```
+```{r pressure, echo=FALSE}
+
+rm(list = ls())
+require(quantmod)
+
+
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
