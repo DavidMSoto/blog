@@ -1,35 +1,43 @@
+
+
+
 ---
-title: "fidelity new website"
+title: "Investing with fidelity and R part I"
 output: html_document
 ---
 
-
-
-
-```{r setup, include=FALSE}
+```{r setup, echo=T, include=T, message=F, warning=F}
 rm(list = ls())
 
 knitr::opts_chunk$set(echo = TRUE)
+
+library(jsonlite)  
+library(XML)       
+library(RCurl)     
+library(stringr)   
+library(plyr)      
+library(dplyr)     
+library(lubridate) 
+
 ```
 
-## Scraping from fidelity using JSON
 
-Recently Fidelity change their website offering new products, basically we have about 101 ETFs, 89 IETFs and about 2800 mutual funds
+# Getting Etfs and investments funds from fidelity
+
+Recently Fidelity changed their website offering new products, 
+basically we have about 101 ETFs, 89 IETFs and about 2800 mutual funds
 
 Below are the urls to gatter this information throught JSON and convert them to datasets, 
-I got this urls using the web developer tools of mozilla, just take a look to the network console and you will see all the get post, put .. etc that the new 
+The urls can look a little odd I got them using the web developer tools of mozilla, 
+just take a look to the network console and you will see all the get /post/ put .. etc that the new 
 
-What I really like about R, is the simpliclity of the code, look how we create three datasets with all the products of fidelity.
+What I really like about R, is the simpliclity of the code, look how we create 2 datasets with all the ETFs and investments funds.
 
 
 
-```{r cars}
 
-library(jsonlite) 
-library(XML)
-library(RCurl)
-library(stringr)
-library(plyr)
+```{r fidelityJSONScraping }
+
 
 url_ETFEI <- "http://lt.morningstar.com/api/rest.svc/9vehuxllxs/security/screener?page=1&pageSize=1000&sortOrder=LegalName%20asc&outputType=json&version=1&languageId=en-GB&currencyId=GBP&universeIds=ETEXG$XLON_3518|ETALL$$ALL_3518&securityDataPoints=SecId|Name|TenforeId|holdingTypeId|isin|sedol|QR_MonthDate|LegalName|Yield_M12|OngoingCharge|StarRatingM255|CustomCategoryId3Name|CollectedSRRI|QR_GBRReturnM12_5|QR_GBRReturnM12_4|QR_GBRReturnM12_3|QR_GBRReturnM12_2|QR_GBRReturnM12_1|CustomMinimumPurchaseAmount|GBRReturnM0|GBRReturnM12|GBRReturnM36|GBRReturnM60|GBRReturnM120&subUniverseId=ETFEI"
 
@@ -37,7 +45,6 @@ url_ITEI <-  "http://lt.morningstar.com/api/rest.svc/9vehuxllxs/security/screene
 
 
 
-library(dplyr)
 ETFEI <- getURL(url_ETFEI) %>% fromJSON()  %>% as.data.frame
 ITEI<- getURL(url_ITEI) %>% fromJSON()  %>% as.data.frame
 
@@ -52,29 +59,37 @@ names(ETFEI) <- c("type", "Name", "isin" , "LegalName", "OngoingCharge" , "categ
 names(ITEI) <- c("type", "Name", "isin" , "LegalName", "OngoingCharge" , "category")
 
 
-head(ETFEI)
+head(select (ITEI,2, 3))
 
 
 ```
 
 ## getting market data 
 
-again lets use JSON to get market data this time from Financial times. 
+Apparently there is no good source of historical data for such  products as mutual funds,
+I mean, there is no API to gather the historical data from yahoo finance or google finance for mutual funds or investments funds.
+sometimeS if you want something good you have to make it yourself. 
+
+With the fuction getFinancialtimesHistoricalData we gather the historical data from  Financial times, again we use a GET operation that gather a JSON
+
+i am measuring the time for this operation because it takes a while, probably there is something that can be improved, feel free to commets the code. 
+
+as you can see, gatering almost 200 products with a depth of two months we take ... 
 
 
-```{r pressure, echo=FALSE}
-
-library(lubridate)
+```{r pressure, echo=T}
 
 
-getFTData<-function(products,months) {
+getFinancialtimesHistoricalData <-function(products,months) {
 
-df <- data.frame(stringsAsFactors=FALSE) 
-start.time <- Sys.time()
-end.date <-gsub("-", "/", Sys.Date())
-start.date <-gsub("-", "/", Sys.Date()-months(months))
+df.return <- data.frame(stringsAsFactors=FALSE) 
+start.time <- Sys.time() # let's see how much time we are goint to spend in this 
 
-url_ft_base <- paste0("https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=", start.date, "&endDate=", end.date, "&symbol=" )
+
+url_ft_base <- paste0("https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=", 
+                      gsub("-", "/", Sys.Date()-months(months)) , "&endDate=", 
+                      gsub("-", "/", Sys.Date()) , "&symbol=" )
+
 #for (i in 1:nrow(products)){
 for (i in 1:5){
   
@@ -87,36 +102,36 @@ for (i in 1:5){
 if (nrow(ft.df) > 2 ) # not all the products have data in financial times, 
 {
   
-  ft.df <- ft.df [-1,c(5,8,9,10,11)] # select the columns we need 
+  ft.df <- ft.df [-1,c(5,8,9,10,11)] # select the columns we need and remove the first row
   names(ft.df )<-c("date","Open","High","Low","Close") # rename de columms
   
   ft.df [ , c("type", "Name", "isin" , "LegalName", "OngoingCharge" , "category") ] <-  products [ i,] 
     
-  df <-rbind( df ,ft.df )
+  df.return <-rbind( df.return ,ft.df )
  
-   } else {   print( products[i,3])}
+   } else {   print( paste0( "the product", products[i,3], "does have any data in financial times API")) }
 
 }
 
-end.time <- Sys.time()
-time.taken <- end.time - start.time
-print(time.taken)
+print( Sys.time() - start.time)
 
-return(df)
+return(df.return)
 
 }
 
-dfe <-getFTData (ETFEI,2) # the second parameter is the number of months
-dfi  <-getFTData (ITEI,2)
+dfe <-getFinancialtimesHistoricalData (ETFEI,2) # the second parameter is the number of months
+dfi  <-getFinancialtimesHistoricalData (ITEI,2)
 
 
 ```
 
 
-#data munging
-Lets format the historical data from the financial times and store it, since i don't want to spend another 5 minutes looking to the screen 
 
-```{r  munging,include=FALSE} 
+#data munging
+Lets format the historical data from the financial times and store it, since i don't want to spend another 5 minutes more looking to the screen !
+converting to numeric and date we will be able to use this dataset to do some simle technical analisis
+
+```{r  munging,include=T} 
 
 df <-rbind( dfe ,dfi )
 df[,1] <- as.Date(df[,1], format="%a, %b %d, %Y") # date format
@@ -130,7 +145,7 @@ saveRDS(df, file.path(getwd(), "../input/etfs_itei.rds"))
 
 # TTR lets use a little of thecnical analisys finding the  overbought and oversold etf or investmend funds 
 
-```{r  aa, echo=FALSE} 
+```{r  aa, echo=T , message=F, warning=F}
 
 rm(list = ls())
 
@@ -162,7 +177,7 @@ h <-head (dfa[order(dfa$rsi),], 1)
 
 # lets see if this is working w
 
-```{r  eda, echo=FALSE} 
+```{r  eda, echo=T , message=F, warning=F}
 library(plotly)
 
 
