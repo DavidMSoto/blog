@@ -62,3 +62,31 @@ rownames(mat_data) <- rnames               # assign row names
 p <- plot_ly(z = mat_data, colorscale = "Greys", type = "heatmap")
 p
 
+library(lubridate)
+
+
+
+
+  start.time <- Sys.time()
+  end.date <-gsub("-", "/", Sys.Date())
+  start.date <-gsub("-", "/", Sys.Date()-years(1))
+  
+url_ft_base <- paste0("https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=", start.date, "&endDate=", end.date, "&symbol=IE00BYPLS672" )
+
+
+ft.xml <- getURL(url_ft_base) %>% fromJSON() %>%  htmlParse(asText = TRUE) 
+
+xmltop = xmlRoot(ft.xml) #gives content of root
+ft.df =ldply(xmlToList(xmltop[[1]]), data.frame) 
+if (nrow(ft.df) > 2 )
+{
+  print("bla bla")
+  } else {
+  print("fuck bla")
+  
+}
+
+print(products[i,3])
+
+ft.df <- ft.df [-1,c(5,8,9,10,11,12)] # select the columns we need 
+
