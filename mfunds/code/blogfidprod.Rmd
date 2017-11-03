@@ -1,10 +1,15 @@
 
-
-
 ---
 title: "Investing with fidelity and R part I"
-output: html_document
+author: "David M soto (davidmontesoto@gmail.com)"
+date: "nov 03, 2017"
+description: Investing with fidelity
+comments: yes
 ---
+
+
+[you can check just the code here ](https://github.com/DavidMSoto/blog/blob/master/mfunds/code/ScrapingFidelity.R)
+
 
 ```{r setup, echo=T, include=T, message=F, warning=F}
 rm(list = ls())
@@ -22,7 +27,10 @@ library(lubridate)
 ```
 
 
-# Getting Etfs and investments funds from fidelity
+
+
+
+# Getting Etfs and investments funds from fidelity #
 
 Recently Fidelity changed their website offering new products, 
 basically we have about 101 ETFs, 89 IETFs and about 2800 mutual funds
@@ -33,7 +41,7 @@ just take a look to the network console and you will see all the get /post/ put 
 
 What I really like about R, is the simpliclity of the code, look how we create 2 datasets with all the ETFs and investments funds.
 
-
+![look how easy is to create the datasets using JSONs](http://www.fillmurray.com/600/400)
 
 
 ```{r fidelityJSONScraping }
@@ -46,7 +54,7 @@ url_ITEI <-  "http://lt.morningstar.com/api/rest.svc/9vehuxllxs/security/screene
 
 
 ETFEI <- getURL(url_ETFEI) %>% fromJSON()  %>% as.data.frame
-ITEI<- getURL(url_ITEI) %>% fromJSON()  %>% as.data.frame
+ITEI<- getURL(url_ITEI) %>% fromJSON()  %>% as.data.frame 
 
 
 
@@ -58,13 +66,13 @@ ITEI <- select (ITEI,1,6,9,12,14,16)
 names(ETFEI) <- c("type", "Name", "isin" , "LegalName", "OngoingCharge" , "category")
 names(ITEI) <- c("type", "Name", "isin" , "LegalName", "OngoingCharge" , "category")
 
+knitr::kable(head(select (ITEI,2, 3,4,5)))
 
-head(select (ITEI,2, 3))
 
 
 ```
 
-## getting market data 
+## Getting market data 
 
 Apparently there is no good source of historical data for such  products as mutual funds,
 I mean, there is no API to gather the historical data from yahoo finance or google finance for mutual funds or investments funds.
@@ -92,7 +100,6 @@ url_ft_base <- paste0("https://markets.ft.com/data/equities/ajax/get-historical-
 
 #for (i in 1:nrow(products)){
 for (i in 1:5){
-  
   url_ft = paste0(url_ft_base,products[i,3]) # third column is sthe isnn
   ft.xml <- getURL(url_ft) %>% fromJSON() %>%  htmlParse(asText = TRUE) 
   
@@ -126,7 +133,6 @@ dfi  <-getFinancialtimesHistoricalData (ITEI,2)
 ```
 
 
-
 #data munging
 Lets format the historical data from the financial times and store it, since i don't want to spend another 5 minutes more looking to the screen !
 converting to numeric and date we will be able to use this dataset to do some simle technical analisis
@@ -144,6 +150,9 @@ saveRDS(df, file.path(getwd(), "../input/etfs_itei.rds"))
 
 
 # TTR lets use a little of thecnical analisys finding the  overbought and oversold etf or investmend funds 
+
+
+*italic*   **bold**
 
 ```{r  aa, echo=T , message=F, warning=F}
 
@@ -175,38 +184,44 @@ h <-head (dfa[order(dfa$rsi),], 1)
 ```
 
 
-# lets see if this is working w
+# lets see the overboguht 
 
-```{r  eda, echo=T , message=F, warning=F}
+* Item 1
+* Item 2
+    + Item 2a
+    + Item 2b
+    
+
+```{r  eda1, echo=T , message=F, warning=F}
 library(plotly)
 
 
 p1 <- plot_ly() %>% 
   add_trace(data=dplyr::filter(df,  isin == h$isin),
             x = ~date, y = ~Close, type="scatter", mode="lines", name = h$isin) 
+p1
+``` 
 
-  
-print(p1)
+# lets see the oversold 
 
+
+
+
+```{r  eda2, echo=T , message=F, warning=F}
 p2 <- plot_ly() %>% 
     add_trace(data=dplyr::filter(df,  isin == t$isin),
             x = ~date, y = ~Close, type="scatter", mode = "lines" , name = t$isin) 
-print(p2)
+p2
+
 ```
 
 
 
+# Header 1
 
+## Header 2
 
-
-
-
-
-
-
-
-
-
+### Header 3
 
 
 
