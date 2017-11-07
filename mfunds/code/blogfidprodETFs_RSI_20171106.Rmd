@@ -130,6 +130,7 @@ return(df.return)
 #dfi  <-getFinancialtimesHistoricalData (ITEI,24)
 
 
+
 ```
 
 

@@ -3,17 +3,12 @@ title: "funds strategy backtest"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ## funds strategy
 
-
 ```{r setup, echo=T, include=T, message=F, warning=F}
-rm(list = ls())
 
-knitr::opts_chunk$set(echo = TRUE)
+
 rm(list = ls())
 library(jsonlite)  
 library(XML)       
@@ -25,6 +20,24 @@ library(lubridate)
 
 ```
 
+© FIL Limited 2017
+Investment types
+
+Funds
+Funds allow investors to pool their money together, which a fund manager will then invest on their behalf. The manager is responsible for choosing investments for the fund and tries to grow investors' money by spreading it over a range of company shares, bonds etc.
+Unit trusts, offshore funds and open-ended investment companies (OEICs) can all be referred to generically as funds.
+
+Exchange Traded Funds (ETFs)
+Exchange traded funds are similar to the funds mentioned above except that they act like a share themselves, and are openly traded on a stock exchange such as the FTSE All Share.  Most ETFs aim to perform in line with a specific index or commodity (like gold) and often have low management fees.
+
+Investment Trusts
+These are funds registered as public limited companies (PLCs) with their own management teams and boards of directors. They can invest in public and private companies, have a specific number of shares in issue and are traded on a stock exchange themselves.
+
+Shares
+Companies issue shares to raise money they can use to grow. Buying a share means owning a small part of that company and its future fortunes. While you may not have any control over day-to-day operations, shareholders can profit from a company's growth.
+
+Bonds and Gilts
+Bonds are loans made to companies or governments with you as the lender. You receive regular interest payments throughout the life of the loan and the initial amount is returned to you at the end. Gilts are bonds issued by the British government.
 
 
 ```{r cars}
@@ -36,25 +49,100 @@ MFEI <-getURL(url_MFEI) %>% fromJSON()  %>% as.data.frame
 
 names(MFEI)
 
-names(MFEI) <- gsub("rows.", "", names(MFEI))
+names(MFEI) <- gsub("rows.", "", names(MFEI)) # nicer names
 
-
-MFEIInc <- MFEI  %>%  filter( !grepl("Acc",LegalName)  ) # we generate another dataset with just the incremental funds
+fondos<-MFEI
 
 
 
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+
+# dta munging 
+```{r pressure, echo=FALSE}
+
+MFEIInc <- fondos  %>%  filter( !grepl("Acc",LegalName)) # we generate another dataset with just the incremental funds
+MFEIAcc <- fondos  %>%  filter( !grepl("Inc",LegalName)) 
+
+
+MFEIAccempty <-MFEIAcc %>% filter(  is.na(CustomCategoryId3Name)) 
+MFEIIncempty <-MFEIInc %>% filter(  is.na(CustomCategoryId3Name)) 
+
+
+MFEIInc %>% filter( grepl("Emer",LegalName, ignore.case = T))
+MFEIInc %>% filter( grepl("Global",LegalName, ignore.case = T))
+
+
+
+
+
+```
+
+
+# lets gather a bit more information 
+
+
+
+
+
+https://www.fundstrategy.co.uk/18-20-behind-numbers-uk-equity-funds-sustainability-lens-datapic/
+
+IE00B4V6GM81
+
+
+http://tools.morningstar.co.uk/api/rest.svc/t92wz0sj7c/security_details/F00000NGLO?viewId=sustainability&idtype=msid&responseViewFormat=json&languageId=en
+
+F000001EZY
+
+GB00B2PB2051
+
+http://tools.morningstar.co.uk/api/rest.svc/t92wz0sj7c/security_details/F000001F03?viewId=sustainability&idtype=msid&responseViewFormat=json&languageId=en
+
+
 
 ```{r pressure, echo=FALSE}
 
-Bonds <-filter( MFEIInc, CustomCategoryId3Name =="Bonds"  ) 
+
+df.return <- data.frame(stringsAsFactors=FALSE) 
+
+for (i in 1:nrow(MFEIInc)){
+url_get <- paste0("http://tools.morningstar.co.uk/api/rest.svc/t92wz0sj7c/security_details/", 
+                     MFEIInc[i,5] ,  
+                      '?viewId=sustainability&idtype=msid&responseViewFormat=json&languageId=en')
+
+REC.data <-getURL(url_get) %>% fromJSON()  %>% as.data.frame
 
 
-MFEIInc <- url_MFEI
+if (ncol(asta) > 5 ) # these are the products with ESG information
+{
+
+  df.return <-rbind( df.return ,REC.data )
+ 
+   } else {   print( paste0( "the product",  MFEIInc[i,5], "Does not have sustianibilita dadta")) }
+
+}
+
+
+```
+
+
+# how many we have by 
+```{r pressure, echo=FALSE}
+detach("package:plyr", unload=TRUE) 
+aa <- MFEIInc %>% group_by( CustomCategoryId3Name) %>%   summarise(count= n())
+
+pp <- plot_ly(aa, x = ~CustomCategoryId3Name, y = ~count,  
+              type = 'scatter' , mode = 'markers', marker = list(size = 15))  %>% 
+
+layout(title = "numbers of ratings by month",  showlegend = TRUE)
+pp
+
+```
+
+
+## how are they doing by sector
+```{r pressure, echo=FALSE}
 
 
 temp <- MFEIInc %>% select(GBRReturnM0,GBRReturnM12,GBRReturnM36,isin,Name,CustomCategoryId3Name)
@@ -68,23 +156,31 @@ plot_ly(temp, x = ~returnbycat, color = ~CustomCategoryId3Name, type = "box") %>
   layout(title = "average score  for each type of rating",  showlegend = TRUE)
 
 ```
+## how are they doing by sector
+```{r pressure, echo=FALSE}
+
+temp <- MFEIInc %>% select(GBRReturnM0,GBRReturnM12,GBRReturnM36,isin,Name,CustomCategoryId3Name)
+
+temp <- na.omit(temp) 
+
+temp <- temp %>% group_by(CustomCategoryId3Name)%>% summarise(returnbycat=mean(GBRReturnM0))
 
 
 
 
+data <- diamonds %>% count(cut, clarity)
+
+p <- ggplot2::diamonds %>% count(cut, clarity) %>%
+  plot_ly(x = ~cut, y = ~n, color = ~clarity)
+
+# Create a shareable link to your chart
+# Set up API credentials: https://plot.ly/r/getting-started
+p
 
 
 
 
-
-
-
-
-
-
-
-
-
+```
 
 
 
