@@ -126,8 +126,8 @@ return(df.return)
 
 }
 
-#dfe <-getFinancialtimesHistoricalData (ETFEI,24) # the second parameter is the number of months
-#dfi  <-getFinancialtimesHistoricalData (ITEI,24)
+dfe <-getFinancialtimesHistoricalData (ETFEI,60) # the second parameter is the number of months
+dfi  <-getFinancialtimesHistoricalData (ITEI,60)
 
 
 
@@ -140,13 +140,12 @@ converting to numeric and date we will be able to use this dataset to do some si
 
 ```{r  munging,include=T} 
 
-#df <-rbind( dfe ,dfi )
-df <-dfe
+df <-rbind( dfe ,dfi )
 df[,1] <- as.Date(df[,1], format="%a, %b %d, %Y") # date format
 converToNumeric = function(x) { as.numeric(gsub(",", "", x, fixed = TRUE)) }
 df[,2:5] = sapply(df[,2:5], converToNumeric) # numeric format
 
-saveRDS(df, file.path(getwd(), "../input/etfs_20171106.rds"))
+saveRDS(df, file.path(getwd(), "../input/etfs_20171108.rds"))
 
 ```
 
