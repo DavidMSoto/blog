@@ -80,7 +80,7 @@ MFEIInc %>% filter( grepl("Global",LegalName, ignore.case = T))
 ```
 
 
-# lets gather a bit more information 
+# lets gather sustainability information 
 
 
 
@@ -97,32 +97,41 @@ F000001EZY
 
 GB00B2PB2051
 
-http://tools.morningstar.co.uk/api/rest.svc/t92wz0sj7c/security_details/F000001F03?viewId=sustainability&idtype=msid&responseViewFormat=json&languageId=en
+http://tools.morningstar.co.uk/api/rest.svc/t92wz0sj7c/security_details/F0000009KA?viewId=sustainability&idtype=msid&responseViewFormat=json&languageId=en
 
-
+url_get <- 'http://tools.morningstar.co.uk/api/rest.svc/t92wz0sj7c/security_details/F00000NGLO?viewId=sustainability&idtype=msid&responseViewFormat=json&languageId=en'
 
 ```{r pressure, echo=FALSE}
 
+ df.return <- data.frame(stringsAsFactors=FALSE) 
 
-df.return <- data.frame(stringsAsFactors=FALSE) 
 
-for (i in 1:nrow(MFEIInc)){
-url_get <- paste0("http://tools.morningstar.co.uk/api/rest.svc/t92wz0sj7c/security_details/", 
+
+for (i in 1:25){
+        
+    
+        url_get <- paste0("http://tools.morningstar.co.uk/api/rest.svc/t92wz0sj7c/security_details/", 
                      MFEIInc[i,5] ,  
                       '?viewId=sustainability&idtype=msid&responseViewFormat=json&languageId=en')
 
-REC.data <-getURL(url_get) %>% fromJSON()  %>% as.data.frame
+      ESG.data <-getURL(url_get) %>% fromJSON()  %>% as.data.frame
 
 
-if (ncol(asta) > 5 ) # these are the products with ESG information
+if (ncol(ESG.data) > 5 ) # these are the products with ESG information
 {
+     print( paste0( "the product ",  MFEIInc[i,5], " Does  have sustianibilita dadta ", i )) 
+  
 
-  df.return <-rbind( df.return ,REC.data )
- 
-   } else {   print( paste0( "the product",  MFEIInc[i,5], "Does not have sustianibilita dadta")) }
+   
+    df.return <-rbind( df.return ,ESG.data[1,5] , fill=T)
+  
+} else 
+  {
+    print( paste0( "the product ",  MFEIInc[i,5], " Does not have sustianibilita dadta" ,  i )) 
+   }
 
 }
-
+ncol(df.return)
 
 ```
 
@@ -181,12 +190,6 @@ p
 
 
 ```
-
-
-
-
-
-
 
 
 

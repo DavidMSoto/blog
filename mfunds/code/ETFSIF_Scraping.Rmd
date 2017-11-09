@@ -44,7 +44,59 @@ What I really like about R, is the simpliclity of the code, look how we create 2
 ![look how easy is to create the datasets using JSONs](http://www.fillmurray.com/600/400)
 
 
+https://webcache.googleusercontent.com/search?q=cache:z2evL2VC3UAJ:https://gist.github.com/hahnicity/45323026693cdde6a116+&cd=1&hl=en&ct=clnk&gl=uk&client=firefox-b
+
+
+http://lt.morningstar.com/api/rest.svc/9vehuxllxs/security/screener?page=1&pageSize=1&sortOrder=LegalName%20asc&outputType=json&version=1&languageId=en-GB&currencyId=GBP&universeIds=ETEXG$XLON_3518|ETALL$$ALL_3518&securityDataPoints=
+SecId|
+Name|
+TenforeId|
+holdingTypeId|
+isin|
+sedol|
+QR_MonthDate|
+LegalName|
+Yield_M12|
+OngoingCharge|
+StarRatingM255|
+CustomCategoryId3Name|
+CollectedSRRI|
+QR_GBRReturnM12_5|
+QR_GBRReturnM12_4|
+QR_GBRReturnM12_3|
+QR_GBRReturnM12_2|
+QR_GBRReturnM12_1|
+CustomMinimumPurchaseAmount|
+GBRReturnM0|
+GBRReturnM12|
+GBRReturnM36|
+GBRReturnM60|
+GBRReturnM120
+&subUniverseId=ETFEI
+
+
+
+http://lt.morningstar.com/api/rest.svc/9vehuxllxs/security/screener?page=1&pageSize=1&sortOrder=LegalName%20asc&outputType=json&version=1&languageId=en-GB&currencyId=GBP&universeIds=ETEXG$XLON_3518|ETALL$$ALL_3518&securityDataPoints=
+*|
+&subUniverseId=ETFEI
+
+Ford  - Historical Price API
+http://globalquote.morningstar.com/globalcomponent/RealtimeHistoricalStockData.ashx?ticker=F&showVol=true&dtype=his&f=d&curry=USD&range=1900-1-1|2014-10-10&isD=true&isS=true&hasF=true&ProdCode=DIRECT 
+
+
+http://globalquote.morningstar.com/globalcomponent/RealtimeHistoricalStockData.ashx?ticker=F&showVol=true&dtype=his&f=d&curry=USD&range=1900-1-1|2014-10-10&isD=true&isS=true&hasF=true&ProdCode=DIRECT
+
+TWTR
+http://financials.morningstar.com/ajax/ReportProcess4CSV.html?t=TWTR&reportType=is&period=12&dataType=A&order=asc&columnYear=5&number=3
+
+
+
+
+
 ```{r fidelityJSONScraping }
+
+
+
 
 
 url_ETFEI <- "http://lt.morningstar.com/api/rest.svc/9vehuxllxs/security/screener?page=1&pageSize=1000&sortOrder=LegalName%20asc&outputType=json&version=1&languageId=en-GB&currencyId=GBP&universeIds=ETEXG$XLON_3518|ETALL$$ALL_3518&securityDataPoints=SecId|Name|TenforeId|holdingTypeId|isin|sedol|QR_MonthDate|LegalName|Yield_M12|OngoingCharge|StarRatingM255|CustomCategoryId3Name|CollectedSRRI|QR_GBRReturnM12_5|QR_GBRReturnM12_4|QR_GBRReturnM12_3|QR_GBRReturnM12_2|QR_GBRReturnM12_1|CustomMinimumPurchaseAmount|GBRReturnM0|GBRReturnM12|GBRReturnM36|GBRReturnM60|GBRReturnM120&subUniverseId=ETFEI"
@@ -146,6 +198,8 @@ converToNumeric = function(x) { as.numeric(gsub(",", "", x, fixed = TRUE)) }
 df[,2:5] = sapply(df[,2:5], converToNumeric) # numeric format
 
 saveRDS(df, file.path(getwd(), "../input/etfs_20171108.rds"))
+
+
 
 ```
 

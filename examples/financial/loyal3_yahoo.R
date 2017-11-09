@@ -10,8 +10,6 @@ library(TTR)
 library(dygraphs)
 library(lubridate)
 
-Sys.setenv(http_proxy="http://dia2.santanderuk.gs.corp:80")
-Sys.getenv("http_proxy")
 
 #nombre empesas
 stock.list<-'https://www.loyal3.com/stocks'
