@@ -28,7 +28,7 @@ unique(GCB$isin)
 ```
 
 #EDA for sectors
-https://moderndata.plot.ly/time-series-charts-by-the-economist-in-r-using-plotly/
+
 
 ```{r scraping,include=FALSE} 
 
