@@ -28,6 +28,8 @@ for (i in vector)
 
   
   e <- dplyr::filter(df,  isin == i)
+
+if(nrow(e) > 14)  
   {
       e <- e[order(as.Date(e$date, format="%Y-%m-%d")),]
       
@@ -36,7 +38,6 @@ for (i in vector)
       tail <- tail(e, 1)
       dfa <-rbind( dfa ,tail )
   }
-  else {   print( paste0( "the product",vector,"is too small" )) } 
 }
 
 
@@ -94,36 +95,75 @@ p2
 library(TTR) #  SMA() for calculating simple moving average
 
 
-historical.data.overbought <- df %>%  filter(isin == t$isin)
 
-ob <- historical.data.overbought[order(as.Date(historical.data.overbought$date, format="%Y-%m-%d")),]
 
-ob$SMA26 <- SMA(ob$Close, 26)
-ob$SMA12 <- SMA(ob$Close, 12)
+sma50200<-function(dataset){ 
+
+ob <- dataset[order(as.Date(dataset$date, format="%Y-%m-%d")),]
+
+ob$SMA50 <- SMA(ob$Close, 50)
 ob$SMA200 <- SMA(ob$Close, 200)
 
-
-
-GB00B1XFGM25[1:735,13] <-GB00B1XFGM25[26:760,10]
-GB00B1XFGM25 [1:749,14] <-GB00B1XFGM25[12:760,11]
-GB00B1XFGM25[1:561,15]<-GB00B1XFGM25[200:760,12]
-
-GB00B1XFGM25[10:12] <-GB00B1XFGM25[13:15]
-
-GB00B1XFGM25[13:15] <- NULL
 
 p <-plot_ly() %>% 
   add_trace(data= ob,
             x = ~date, y = ~Close, type="scatter", mode="lines", name = "historical.data.overbought") %>% 
-  add_trace(x = ~date,y = ~SMA26, type="scatter", mode="lines", name = "SMA26") %>% 
- add_trace(x = ~date,y = ~SMA12, type="scatter", mode="lines", name = "SMA12") %>% 
+  add_trace(x = ~date,y = ~SMA50, type="scatter", mode="lines", name = "SMA50") %>% 
    add_trace(x = ~date,y = ~SMA200, type="scatter", mode="lines", name = "SMA200") 
 
-p
-print(p)
+return(p)  
+
+}
+
+
+historical.data.overbought <- df %>%  filter(isin == t$isin)
+historical.data.oversell <- df %>%  filter(isin == h$isin)
+
+pb<-sma50200(historical.data.overbought)
+ps<-sma50200(historical.data.oversell)
+pb
+ps 
  
 ```
 
+
+# lets calculate how many are oversell but they are in positive trend so there is a chance to make some money
+
+
+```{r pressure, echo=FALSE}
+
+
+vector <- unique(df$isin)
+
+R52 <- data.frame(stringsAsFactors=FALSE) 
+
+
+for (i in vector)
+{
+
+    e <- dplyr::filter(df,  isin == i)
+
+if(nrow(e) > 200)  
+  {
+      e <- e[order(as.Date(e$date, format="%Y-%m-%d")),]
+      
+      e$SMA50 <- SMA(e$Close, 50)
+      e$SMA200 <- SMA(e$Close, 200)
+      e$rsi <- RSI(e$Close, n=14)
+      tail <- tail(e, 1)
+      R52 <-rbind( R52 ,tail )
+}
+  else {print(i)}
+}
+
+thechosenones <-R52 %>% filter (rsi < 40) %>% filter (SMA200 < SMA50)
+
+
+historical.data.thechosenones <- df %>%  filter(isin == thechosenones$isin)
+ps<-sma50200(historical.data.thechosenones)
+ps
+
+```
 
 # what kind of etfs we have ?
 # how many we have by 
@@ -161,39 +201,6 @@ MFEIInc <- dfa  %>%  filter( grepl(paste(thingslooklikeMaterial, collapse="|"),L
 ```
 
 
-#under review 
 
-```{r pressure, echo=FALSE}
-stock <- df  %>% filter(isin == 'IE00B4PY7Y77')
-
-plot(stock$Close)
-
-dygraph(stocks.ts$TWTR$Close, main = "TWTR Stock Price") %>%
-  dyRangeSelector(dateWindow = c("2013-12-18", "2016-12-30"))
-
-head(SMA(stocks.ts$TWTR$Close, 200))
-head(SMA(stocks.ts$TWTR$Close, 50))
-
-mov.avgs<-function(stock.df){
-  stock.close<-stock.df[,4]
-  ifelse((nrow(stock.df)<(2*260)),
-         x<-data.frame(stock.df, 'NA', 'NA'),
-         x<-data.frame(stock.df, SMA(stock.close, 200), SMA(stock.close, 50)))
-  colnames(x)<-c(names(stock.df), 'sma_200','sma_50')
-  x<-x[complete.cases(x$sma_200),]
-  return(x)
-}
-
-stocks.ts<-pblapply(stocks.ts, mov.avgs)
-
-dygraph(stocks.ts$FOX[,c('sma_200','sma_50')],main = 'FOX Moving Averages') %>%
-  dySeries('sma_50', label = 'sma 50') %>%
-  dySeries('sma_200', label = 'sma 200') %>%
-  dyRangeSelector(height = 30) %>%
-  dyShading(from = '2016-4-28', to = '2016-7-27', color = '#CCEBD6') %>%
-  dyShading(from = '2016-7-28', to = '2016-12-30', color = '#FFE6E6')
-
-
-```
 
 
