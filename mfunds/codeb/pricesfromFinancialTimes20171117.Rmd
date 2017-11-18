@@ -1,0 +1,113 @@
+---
+title: "fidelity Prices"
+author: "david soto"
+date: "11/17/2017"
+output: html_document
+---
+
+
+```{r setup, echo=T, include=T, message=F, warning=F}
+rm(list = ls())
+
+library(jsonlite)  
+library(XML)       
+library(RCurl)     
+library(stringr)   
+library(plyr)      
+library(dplyr)     
+library(lubridate) 
+
+```
+
+
+
+## Getting market data 
+
+Apparently there is no good source of historical data for such  products as mutual funds,
+I mean, there is no API to gather the historical data from yahoo finance or google finance for mutual funds or investments funds.
+sometimeS if you want something good you have to make it yourself. 
+
+With the fuction getFinancialtimesHistoricalData we gather the historical data from  Financial times, again we use a GET operation that gather a JSON
+
+i am measuring the time for this operation because it takes a while, probably there is something that can be improved, feel free to commets the code. 
+
+as you can see, gatering almost 200 products with a depth of two months we take ... 
+
+
+```{r getFinancialtimesHistoricalData, echo=T}
+
+
+getFinancialtimesHistoricalData <-function(products,months) {
+  
+  df.return <- data.frame(stringsAsFactors=FALSE) 
+  start.time <- Sys.time() # let's see how much time we are going to spend in this 
+  
+  
+  url.ft.base <- paste0("https://markets.ft.com/data/equities/ajax/get-historical-prices?startDate=", 
+                        gsub("-", "/", Sys.Date()-months(months)) , "&endDate=", 
+                        gsub("-", "/", Sys.Date()) , "&symbol=" )
+  
+  for (i in 1:nrow(products)){
+    url.ft = paste0(url.ft.base,products[i,"isin"]) # 
+    ft.xml <- getURL(url.ft) %>% fromJSON() %>%  htmlParse(asText = TRUE) 
+    
+    xmltop = xmlRoot(ft.xml) #gives content of root
+    ft.df =ldply(xmlToList(xmltop[[1]]), data.frame) 
+    
+    if (nrow(ft.df) > 2 ) # not all the products have data in financial times, 
+    {
+      
+      ft.df <- ft.df [-1,c(5,8,9,10,11,12)] # select the columns we need and remove the first row
+      names(ft.df )<-c("date","Open","High","Low","Close","Volumen") # rename de columms
+      
+      ft.df<-merge(ft.df,products [i,] )
+      
+      df.return <-rbind( df.return ,ft.df )
+      
+    } else {   print( paste0( "the product", products[i,"isin"], "Does not have any data in financial times API")) }
+    
+  }
+  
+  print( Sys.time() - start.time)
+  
+  return(df.return)
+  
+}
+
+
+```
+
+
+
+
+#save
+
+```{r save, echo=T}
+
+eim <- readRDS("~/dataScience/blog/mfunds/input/eim20171117.rds")  
+dfe<-getFinancialtimesHistoricalData(eim,60)
+saveRDS( dfe, file.path(getwd(), "../input/historical.prices.date.rds") )
+
+```
+
+
+bola extra
+
+```{java union, echo=T}
+
+eim <- readRDS("~/dataScience/blog/mfunds/input/eim20171117.rds")  
+dfe <-getFinancialtimesHistoricalData (eim,1) 
+
+alldata <- readRDS("./input/etfs_20171108.rds")
+
+
+library(sqldf)
+
+
+trainf <- sqldf("SELECT * from dfe
+                  UNION
+                SELECT * from alldata
+                ORDER BY Date
+                 " )
+```
+

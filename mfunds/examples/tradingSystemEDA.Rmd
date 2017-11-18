@@ -1,0 +1,70 @@
+---
+title: "signalSelected"
+author: "david soto"
+date: "9/28/2017"
+output: html_document
+---
+
+#intro
+
+At this point that we have already the historical data from the selected 50,
+we can use the quantmod and the PerformanceAnalytics to make some signal system or even some backtesting. 
+
+http://www.thertrader.com/2015/07/07/r-financial-time-series-tips-everyone-should-know-about/
+
+https://rbresearch.wordpress.com/2013/02/19/momentum-in-r-part-4-with-quantstrat/
+
+
+The Kelly Criterion - Does It Work?
+https://quantstrattrader.wordpress.com/2017/09/29/the-kelly-criterion-does-it-work/
+
+```{r setup, include=FALSE}
+
+rm(list = ls())
+require(quantmod)
+
+
+setwd("~/dataScience/blog/mfunds/")
+#setwd("D:\\repos\\blog-master\\mfunds\\")
+
+
+
+```
+
+
+trading System , 
+
+
+https://www.quantinsti.com/blog/quantitative-trading-strategy-using-r/
+
+Mean reversion is a theory that suggests that the prices eventually move back to their average value
+
+
+
+
+https://www.r-bloggers.com/backtesting-a-simple-stock-trading-strategy/
+
+The strategy is simple: Find the high point of the stock over the last 200 days, 
+and count the number of days that have elapsed since that high.  If its been more less than 100 days, own the stock.
+
+
+
+
+### back test
+
+```{r setup, include=FALSE}
+
+macd = MACD(x, nFast=12, nSlow=26,nSig=9,maType=SMA,percent = FALSE)
+chartSeries(x, TA='addMACD()')
+signal = Lag(ifelse(macd$macd < macd$signal, -1, 1))
+returns = ROC(x)*signal
+returns = returns['2017-01-01/2017-06-01']
+portfolio = exp(cumsum(returns))
+plot(portfolio)
+table.Drawdowns(returns, top=5)
+table.DownsideRisk(returns)
+charts.PerformanceSummary(returns)
+
+```
+
+
