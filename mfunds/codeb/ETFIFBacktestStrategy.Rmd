@@ -16,7 +16,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 rm(list = ls())
 
-df <-readRDS("../input/etfs_20171108.rds")
+df <-readRDS("../input/historical.prices.dETFEI.date.rds")
+
+df[,1] <- as.Date(df[,1], format="%a, %b %d, %Y") # date format
+converToNumeric = function(x) { as.numeric(gsub(",", "", x, fixed = TRUE)) }
+df[,2:5] = sapply(df[,2:5], converToNumeric) # numeric format
+
 
 library(TTR) #  rsi() for calculating simple moving average
 
@@ -48,13 +53,10 @@ h <-head (dfa[order(dfa$rsi),], 1)
 ```
 
 
-# lets see the overboguht 
+# lets see the overboguht / # lets see the oversold 
 
-* Item 1
-* Item 2
-    + Item 2a
-    + Item 2b
-    
+
+
 
 ```{r  eda1, echo=T , message=F, warning=F}
 library(plotly)
@@ -67,34 +69,16 @@ p1
 
 
 p1 <- plot_ly() %>% 
-  add_trace(data=dplyr::filter(df,  isin == 'IE00B4PY7Y77'),
-            x = ~date, y = ~Close, type="scatter", mode="lines", name = 'IE00B4PY7Y77') 
+  add_trace(data=dplyr::filter(df,  isin == t$isin),
+            x = ~date, y = ~Close, type="scatter", mode="lines", name = t$isin) 
 p1
 
 ``` 
-
-# lets see the oversold 
-
-
-
-
-```{r  eda2, echo=T , message=F, warning=F}
-p2 <- plot_ly() %>% 
-    add_trace(data=dplyr::filter(df,  isin == t$isin),
-            x = ~date, y = ~Close, type="scatter", mode = "lines" , name = t$isin) 
-p2
-
-```
-
 
 
 
 
 ```{r scraping,include=FALSE} 
-
-library(TTR) #  SMA() for calculating simple moving average
-
-
 
 
 sma50200<-function(dataset){ 
